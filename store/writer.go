@@ -2,6 +2,7 @@ package store
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/hashicorp/go-hclog"
 	"github.com/jaegertracing/jaeger/model"
 	"github.com/jaegertracing/jaeger/plugin/storage/es/spanstore/dbmodel"
@@ -42,13 +43,12 @@ func (sw *logzioSpanWriter) WriteSpan(span *model.Span) error {
 	//jsonSpan := sw.spanConverter.FromDomainEmbedProcess(span)
 
 	//sw.logger.Error("SSSSSSSSSSSSSSSSSSSSSSPPPPPPPPAAAAANNNN: ", span.)
-	spanBytes, err := json.Marshal(span)
-	spanString := string(spanBytes)
-	spanString, err	= sjson.Set(spanString,"jaegerTags",span.Tags)
-	spanString, err = sjson.Delete(spanString,"tags")
+	err, spanString := getToLogzioSpan(err, span)
+
 	if err != nil {
 		sw.logger.Warn("************************************************************************************", err.Error())
 	}
+	sw.logger.Error("logs:", len(span.GetLogs()))
 	sw.logger.Error("Sending span: ", spanString)
 
 	err = sw.sender.Send([]byte(spanString))
@@ -60,6 +60,21 @@ func (sw *logzioSpanWriter) WriteSpan(span *model.Span) error {
 	//jsonSpan := sw.spanConverter.FromDomainEmbedProcess(span).
 	//err = sw.sender.Send(jsonSpan)
 	return err
+}
+
+func getToLogzioSpan(err error, span *model.Span) (error, string) {
+
+	spanBytes, err := json.Marshal(span)
+	spanString := string(spanBytes)
+	spanString, err = sjson.Set(spanString, "jaegerTags", span.Tags)
+	spanString, err = sjson.Delete(spanString, "tags")
+	spanString, err = sjson.Set(spanString, "span_id", fmt.Sprintf("%x", int(span.SpanID)))
+	spanString, err = sjson.Set(spanString, "trace_id", fmt.Sprintf("%x", span.TraceID.Low))
+	//for
+	spanString, err = sjson.Set(spanString, "references.0.span_id", fmt.Sprintf("%x", int(span.SpanID)))
+	spanString, err = sjson.Set(spanString, "references.0.trace_id", fmt.Sprintf("%x", span.TraceID.Low))
+
+	return err, spanString
 }
 
 func NewLogzioSpanWriter(accountToken string, logger hclog.Logger) *logzioSpanWriter {
