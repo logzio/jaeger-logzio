@@ -96,9 +96,6 @@ func (sw *logzioSpanWriter) transformToLogzioTags(tags []model.KeyValue) map[str
 func (sw *logzioSpanWriter) transformToLogzioRefs(references []model.SpanRef) []logzioReference {
 	var result []logzioReference
 	for _, ref := range references {
-		//result[strconv.Itoa(i) + ".spanID"] = references[i].SpanID.String()
-		//result[strconv.Itoa(i) + ".traceID"] = references[i].TraceID.String()
-		//result[strconv.Itoa(i) + ".RefType"] = references[i].GetRefType().String()
 		logzRef := logzioReference{
 			SpanId:  ref.SpanID.String(),
 			TraceId: ref.TraceID.String(),
@@ -109,12 +106,12 @@ func (sw *logzioSpanWriter) transformToLogzioRefs(references []model.SpanRef) []
 	return result
 }
 
-func NewLogzioSpanWriter(accountToken string, logger hclog.Logger) *logzioSpanWriter {
+func NewLogzioSpanWriter(accountToken string, url string, logger hclog.Logger) *logzioSpanWriter {
 	var err error
 	var sender *logzio.LogzioSender
 	sender, err = logzio.New(
 		accountToken,
-		logzio.SetUrl("https://listener.logz.io:8071"),
+		logzio.SetUrl("https://" + url + ":8071"),
 		logzio.SetDebug(&loggerWriter{logger: logger}),
 		logzio.SetDrainDiskThreshold(99))
 

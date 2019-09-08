@@ -1,2 +1,3 @@
-logzioStorage:
-   token: "Asdfsdf"
+listener_host: "listener.logz.io"
+api_token: "api-token"
+account_token: "sapmle-token"

@@ -16,12 +16,12 @@ type Store struct {
 	writer *logzioSpanWriter
 }
 
-func NewLogzioStore(accountToken string, apiToken string , logger hclog.Logger) *Store {
+func NewLogzioStore(config LogzioConfig, logger hclog.Logger) *Store {
 
-	reader := NewLogzioSpanReader(apiToken, logger)
+	reader := NewLogzioSpanReader(config.Api_Token, logger)
 
 
-	writer := NewLogzioSpanWriter(accountToken, logger)
+	writer := NewLogzioSpanWriter(config.Account_Token, config.Listener_Host, logger)
 
 	store := &Store{
 		reader: reader,
@@ -47,4 +47,9 @@ func (store *Store) DependencyReader() dependencystore.Reader {
 	return store.reader
 }
 
+type LogzioConfig struct {
+	Account_Token string
+	Api_Token     string
+	Listener_Host string
+}
 
