@@ -8,13 +8,14 @@ import (
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"jaeger-logzio/store"
-	"strconv"
 )
+
+const LOGGER_NAME = "jaeger-logzio"
 
 func main() {
 	logger := hclog.New(&hclog.LoggerOptions{
 		Level:      hclog.Warn,
-		Name:       "jaeger-logzio",
+		Name:       LOGGER_NAME,
 		JSONFormat: true,
 	})
 
@@ -24,7 +25,6 @@ func main() {
 
 	flag.StringVar(&configPath, "config", "", "The absolute path to the logz.io plugin's configuration file")
 	flag.Parse()
-	logger.Error("**************************************************************** config: ", configPath)
 
 	yamlFile, err := ioutil.ReadFile(configPath)
 	if err != nil {
@@ -35,11 +35,6 @@ func main() {
 			logger.Error(err.Error())
 		}
 	}
-
-	logger.Error("configezzz: ", logzioConfig.Listener_Host, logzioConfig.Listener_Host, strconv.Itoa(len(yamlFile)))
-
-	logger.Warn("*************************************************************creating logz storage")
 	logzioStore = store.NewLogzioStore(logzioConfig, logger)
-	logger.Error("**********************************************************starting grpc server")
 	grpc.Serve(logzioStore)
 }

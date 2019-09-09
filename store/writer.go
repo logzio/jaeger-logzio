@@ -6,8 +6,21 @@ import (
 	"github.com/jaegertracing/jaeger/model"
 	"github.com/jaegertracing/jaeger/plugin/storage/es/spanstore/dbmodel"
 	"github.com/logzio/logzio-go"
-	"strconv"
 )
+
+const JSON_TYPE = "type"
+const JAEGER_SPAN = "JaegerSpan"
+const JSON_JAEGER_TAGS = "JaegerTags"
+const JSON_TAGS = "tags"
+const JSON_PROCESS = "process"
+const JSON_PROCESS_TAGS = "process.tags"
+const JSON_PROCESS_SERVICE_NAME = "process.serviceName"
+const JSON_TIMESTAMP = "@timestamp"
+const JSON_START_TIME_MILLIS = "startTimeMillis"
+const VALUE_SUFFIX = ".value"
+const TYPE_SUFFIX = ".type"
+const HTTPS_PREFIX = "https://"
+const PORT_SUFFIX = ":8071"
 
 type logzioSpanWriter struct {
 	accountToken string
@@ -16,130 +29,82 @@ type logzioSpanWriter struct {
 	spanConverter    dbmodel.FromDomain
 }
 
-type logzioReference struct {
-	SpanId  string `json:"span_id"`
-	TraceId string `json:"trace_id"`
-	RefType string `json:"ref_type"`
-}
-
 type loggerWriter struct {
 	logger   hclog.Logger
 }
 
-func (lw *loggerWriter) Write(p []byte) (n int, err error) {
-	lw.logger.Error(string(p))
+func (writer *loggerWriter) Write(p []byte) (n int, err error) {
+	writer.logger.Error(string(p))
 	return len(p), nil
 }
 
-func (sw *logzioSpanWriter) WriteSpan(span *model.Span) error {
-	//msg, err := json.Marshal(map[string]string{"msg":"did you just shit your pants?"})
-	var err error
-	if sw.sender == nil {
-		sw.logger.Error("SSSSSSSSSSSSSSSSSSSSSSender is null")
+func (spanWriter *logzioSpanWriter) WriteSpan(span *model.Span) error {
 
-	}
-
-	err, spanBytes := sw.transformToLogzioSpan(span)
+	err, spanBytes := spanWriter.transformToLogzioSpan(span)
 
 	if err != nil {
-		sw.logger.Warn("************************************************************************************", err.Error())
+		spanWriter.logger.Warn("************************************************************************************", err.Error())
 	}
-	//sw.logger.Error("refs:" + strconv.Itoa(len(span.GetReferences())))
-	//sw.logger.Error("logs:" + strconv.Itoa(len(span.GetLogs())))
-	//sw.logger.Error("tags:" + strconv.Itoa(len(span.GetTags())))
-	//sw.logger.Error("processTags:" + strconv.Itoa(len(span.GetProcess().Tags)))
-	//sw.logger.Error("Sending span: ", spanBytes)
 
-	err = sw.sender.Send(spanBytes)
+	err = spanWriter.sender.Send(spanBytes)
 
 	if err != nil {
-		sw.logger.Warn("************************************************************************************", err.Error())
+		spanWriter.logger.Warn("************************************************************************************", err.Error())
 	}
-	sw.sender.Drain()
-	//jsonSpan := sw.spanConverter.FromDomainEmbedProcess(span).
-	//err = sw.sender.Send(jsonSpan)
+	spanWriter.sender.Drain()
 	return err
 }
 
-func (sw *logzioSpanWriter) transformToLogzioSpan(span *model.Span) (error, []byte) {
+func (spanWriter *logzioSpanWriter) transformToLogzioSpan(span *model.Span) (error, []byte) {
 
-	//spanBytes, err := json.Marshal(span)
-	//spanString := string(spanBytes)
-	var err error
-	sw.logger.Error("logzRefs:" + strconv.Itoa(len(sw.transformToLogzioRefs(span.GetReferences()))))
-	spanString := sw.spanConverter.FromDomainEmbedProcess(span)
+	spanString := spanWriter.spanConverter.FromDomainEmbedProcess(span)
 	spanBytes, err := json.Marshal(spanString)
 	if err != nil {
-		sw.logger.Error(err.Error())
+		spanWriter.logger.Error(err.Error())
 	}
-	//sw.logger.Error(spanString)
-	m := make(map[string]interface{})
-	err = json.Unmarshal(spanBytes,&m)
+	spanMap := make(map[string]interface{})
+	err = json.Unmarshal(spanBytes,&spanMap)
 	if err != nil {
-		sw.logger.Error(err.Error())
+		spanWriter.logger.Error(err.Error())
 	}
-	m["type"] = "JaegerSpan"
-	m["JaegerTags"] = sw.transformToLogzioTags(span.Tags)
-	delete(m, "tags")
-	delete(m,"process")
-	m["process.tags"] = sw.transformToLogzioTags(span.Process.Tags)
-	m["process.serviceName"] = span.Process.ServiceName
-	m["@timestamp"] = m["startTimeMillis"]
 
-	spanBytes, err = json.Marshal(m)
+	delete(spanMap, JSON_TAGS)
+	delete(spanMap, JSON_PROCESS)
+	spanMap[JSON_TYPE] = JAEGER_SPAN
+	spanMap[JSON_JAEGER_TAGS] = spanWriter.transformToLogzioTags(span.Tags)
+	spanMap[JSON_PROCESS_TAGS] = spanWriter.transformToLogzioTags(span.Process.Tags)
+	spanMap[JSON_PROCESS_SERVICE_NAME] = span.Process.ServiceName
+	spanMap[JSON_TIMESTAMP] = spanMap[JSON_START_TIME_MILLIS]
+	spanBytes, err = json.Marshal(spanMap)
 	return err, spanBytes
 }
 
-func (sw *logzioSpanWriter) transformToLogzioTags(tags []model.KeyValue) map[string]interface{} {
+func (spanWriter *logzioSpanWriter) transformToLogzioTags(tags []model.KeyValue) map[string]interface{} {
 	result := make(map[string]interface{})
 	for _, tag := range tags {
-		result[tag.Key + ".value"] = tag.Value()
-		if tag.GetVType() != model.ValueType_STRING {
-			result[tag.Key + ".type"] = tag.GetVType().String()
-		}
-	}
-	return result
-}
 
-func (sw *logzioSpanWriter) transformToLogzioRefs(references []model.SpanRef) []logzioReference {
-	var result []logzioReference
-	for _, ref := range references {
-		logzRef := logzioReference{
-			SpanId:  ref.SpanID.String(),
-			TraceId: ref.TraceID.String(),
-			RefType: ref.RefType.String(),
+		result[tag.Key + VALUE_SUFFIX] = tag.Value()
+		if tag.GetVType() != model.ValueType_STRING {
+			result[tag.Key + TYPE_SUFFIX] = tag.GetVType().String()
 		}
-		result = append(result, logzRef)
 	}
 	return result
 }
 
 func NewLogzioSpanWriter(accountToken string, url string, logger hclog.Logger) *logzioSpanWriter {
-	var err error
-	var sender *logzio.LogzioSender
-	sender, err = logzio.New(
+	sender, err := logzio.New(
 		accountToken,
-		logzio.SetUrl("https://" + url + ":8071"),
-		logzio.SetDebug(&loggerWriter{logger: logger}),
-		logzio.SetDrainDiskThreshold(99))
+		logzio.SetUrl(HTTPS_PREFIX + url + PORT_SUFFIX),
+		logzio.SetDebug(&loggerWriter {logger: logger}),
+		logzio.SetDrainDiskThreshold(98))
 
 	if err != nil {
 		logger.Warn(err.Error(), "********************************************************************")
 	}
-	w := &logzioSpanWriter{
-		accountToken:	accountToken,
+	spanWriter := &logzioSpanWriter{
+		accountToken:  accountToken,
 		logger: logger,
 		sender: sender,
 	}
-
-	logger.Warn("Creating new span writer *******************************************")
-
-	msg, err := json.Marshal(map[string]string{"msg":"this is a sample message"})
-
-	logger.Warn(w.accountToken, "yes yews" )
-	err = w.sender.Send(msg)
-	if err != nil {
-		w.logger.Warn("************************************************************************************", err.Error())
-	}
-	return w
+	return spanWriter
 }

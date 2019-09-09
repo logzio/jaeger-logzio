@@ -11,6 +11,8 @@ var (
 	_ shared.StoragePlugin = (*Store)(nil)
 )
 
+const DEFAULT_LISTENER_HOST = "listener.logz.io"
+
 type Store struct {
 	reader *logzioSpanReader
 	writer *logzioSpanWriter
@@ -18,9 +20,13 @@ type Store struct {
 
 func NewLogzioStore(config LogzioConfig, logger hclog.Logger) *Store {
 
+	//if config.Account_Token == "" {
+	//	panic("Account token can't be empty")
+	//}
+	if config.Listener_Host == "" {
+		config.Listener_Host = DEFAULT_LISTENER_HOST
+	}
 	reader := NewLogzioSpanReader(config.Api_Token, logger)
-
-
 	writer := NewLogzioSpanWriter(config.Account_Token, config.Listener_Host, logger)
 
 	store := &Store{
