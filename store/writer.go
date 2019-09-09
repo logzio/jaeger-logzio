@@ -4,10 +4,8 @@ import (
 	"encoding/json"
 	"github.com/hashicorp/go-hclog"
 	"github.com/jaegertracing/jaeger/model"
-	"github.com/jaegertracing/jaeger/model/converter/thrift/jaeger"
 	"github.com/jaegertracing/jaeger/plugin/storage/es/spanstore/dbmodel"
 	"github.com/logzio/logzio-go"
-	"github.com/tidwall/sjson"
 	"strconv"
 )
 
@@ -41,18 +39,18 @@ func (sw *logzioSpanWriter) WriteSpan(span *model.Span) error {
 
 	}
 
-	err, spanString := sw.transformToLogzioSpan(span)
+	err, spanBytes := sw.transformToLogzioSpan(span)
 
 	if err != nil {
 		sw.logger.Warn("************************************************************************************", err.Error())
 	}
-	sw.logger.Error("refs:" + strconv.Itoa(len(span.GetReferences())))
-	sw.logger.Error("logs:" + strconv.Itoa(len(span.GetLogs())))
-	sw.logger.Error("tags:" + strconv.Itoa(len(span.GetTags())))
-	sw.logger.Error("processTags:" + strconv.Itoa(len(span.GetProcess().Tags)))
-	sw.logger.Error("Sending span: ", spanString)
+	//sw.logger.Error("refs:" + strconv.Itoa(len(span.GetReferences())))
+	//sw.logger.Error("logs:" + strconv.Itoa(len(span.GetLogs())))
+	//sw.logger.Error("tags:" + strconv.Itoa(len(span.GetTags())))
+	//sw.logger.Error("processTags:" + strconv.Itoa(len(span.GetProcess().Tags)))
+	//sw.logger.Error("Sending span: ", spanBytes)
 
-	err = sw.sender.Send([]byte(spanString))
+	err = sw.sender.Send(spanBytes)
 
 	if err != nil {
 		sw.logger.Warn("************************************************************************************", err.Error())
@@ -63,23 +61,33 @@ func (sw *logzioSpanWriter) WriteSpan(span *model.Span) error {
 	return err
 }
 
-func (sw *logzioSpanWriter) transformToLogzioSpan(span *model.Span) (error, string) {
+func (sw *logzioSpanWriter) transformToLogzioSpan(span *model.Span) (error, []byte) {
 
 	//spanBytes, err := json.Marshal(span)
 	//spanString := string(spanBytes)
-
+	var err error
 	sw.logger.Error("logzRefs:" + strconv.Itoa(len(sw.transformToLogzioRefs(span.GetReferences()))))
-	spanString := jaeger.FromDomainSpan(span).String()
-	spanString, err := sjson.Set(spanString, "type", "jaegerSpan")
-	spanString, err = sjson.Set(spanString, "JaegerTags", sw.transformToLogzioTags(span.Tags))
-	spanString, err = sjson.Delete(spanString, "tags")
-	spanString, err = sjson.Set(spanString, "process.tags", sw.transformToLogzioTags(span.Process.Tags))
-	spanString, err = sjson.Set(spanString, "references", sw.transformToLogzioRefs(span.GetReferences()))
-	spanString, err = sjson.Set(spanString, "logs", span.GetLogs())
-	spanString, err = sjson.Set(spanString, "span_id", span.SpanID.String())
-	spanString, err = sjson.Set(spanString, "trace_id", span.TraceID.String())
+	spanString := sw.spanConverter.FromDomainEmbedProcess(span)
+	spanBytes, err := json.Marshal(spanString)
+	if err != nil {
+		sw.logger.Error(err.Error())
+	}
+	//sw.logger.Error(spanString)
+	m := make(map[string]interface{})
+	err = json.Unmarshal(spanBytes,&m)
+	if err != nil {
+		sw.logger.Error(err.Error())
+	}
+	m["type"] = "JaegerSpan"
+	m["JaegerTags"] = sw.transformToLogzioTags(span.Tags)
+	delete(m, "tags")
+	delete(m,"process")
+	m["process.tags"] = sw.transformToLogzioTags(span.Process.Tags)
+	m["process.serviceName"] = span.Process.ServiceName
+	m["@timestamp"] = m["startTimeMillis"]
 
-	return err, spanString
+	spanBytes, err = json.Marshal(m)
+	return err, spanBytes
 }
 
 func (sw *logzioSpanWriter) transformToLogzioTags(tags []model.KeyValue) map[string]interface{} {
