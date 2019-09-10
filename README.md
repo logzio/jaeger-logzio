@@ -1,5 +1,6 @@
 # jaeger-logzio
 A storage integration for Jaeger
+§
 Build:
 ```
 go build
