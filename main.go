@@ -14,7 +14,7 @@ const LOGGER_NAME = "jaeger-logzio"
 
 func main() {
 	logger := hclog.New(&hclog.LoggerOptions{
-		Level:      hclog.Warn,
+		Level:      hclog.Debug,
 		Name:       LOGGER_NAME,
 		JSONFormat: true,
 	})

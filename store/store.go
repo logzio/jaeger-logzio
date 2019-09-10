@@ -17,7 +17,6 @@ type Store struct {
 }
 
 func NewLogzioStore(config LogzioConfig, logger hclog.Logger) *Store {
-
 	reader := NewLogzioSpanReader(config.Api_Token, logger)
 	writer, err := NewLogzioSpanWriter(config.Account_Token, config.Listener_Host, logger)
 	if err != nil {
@@ -50,5 +49,14 @@ type LogzioConfig struct {
 	Account_Token string
 	Api_Token     string
 	Listener_Host string
+}
+
+func (config *LogzioConfig) String() string {
+	desc :="account token: " + config.Account_Token +
+	"\n api token: " + config.Api_Token
+	 if config.Listener_Host != "" {
+	 	desc += "\n listener host: " + config.Listener_Host
+	 }
+	return desc
 }
 
