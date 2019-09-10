@@ -19,6 +19,10 @@ const JSON_PROCESS_TAGS = "process.tags"
 const JSON_PROCESS_SERVICE_NAME = "process.serviceName"
 const JSON_TIMESTAMP = "@timestamp"
 const JSON_START_TIME_MILLIS = "startTimeMillis"
+const JSON_WARNINGS = "warnings"
+const JSON_ERRORS = "errors"
+const LEVEL_WARNING = "warning"
+const LEVEL_ERROR = "error"
 const VALUE_SUFFIX = ".value"
 const TYPE_SUFFIX = ".type"
 const HTTPS_PREFIX = "https://"
@@ -75,7 +79,21 @@ func transformToLogzioSpan(span *model.Span) ([]byte, error) {
 	spanMap[JSON_PROCESS_TAGS] = transformToLogzioTags(span.Process.Tags)
 	spanMap[JSON_PROCESS_SERVICE_NAME] = span.Process.ServiceName
 	spanMap[JSON_TIMESTAMP] = spanMap[JSON_START_TIME_MILLIS]
+	spanMap[JSON_WARNINGS] = getLogLevelCount(span.Logs, LEVEL_WARNING)
+	spanMap[JSON_ERRORS] = getLogLevelCount(span.Logs, LEVEL_ERROR)
 	return json.Marshal(spanMap)
+}
+
+func getLogLevelCount(logs []model.Log, level string) int {
+	levelCount := 0
+	for _,log := range logs {
+		for _, field := range log.Fields {
+			if field.Key == "level" && field.Value() == level {
+				levelCount++
+			}
+		}
+	}
+	return levelCount
 }
 
 func transformToLogzioTags(tags []model.KeyValue) map[string]interface{} {
