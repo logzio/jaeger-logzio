@@ -16,7 +16,7 @@ require (
 	github.com/jaegertracing/jaeger v1.13.1
 	github.com/logzio/logzio-go v0.0.0-20190421083739-334c774b7aeb
 	github.com/opentracing/opentracing-go v1.1.0 // indirect
-	github.com/pkg/errors v0.8.1 // indirect
+	github.com/pkg/errors v0.8.1
 	github.com/prashantv/protectmem v0.0.0-20171002184600-e20412882b3a // indirect
 	github.com/shirou/gopsutil v2.18.12+incompatible // indirect
 	github.com/spf13/cobra v0.0.5 // indirect

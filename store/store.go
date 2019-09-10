@@ -18,12 +18,11 @@ type Store struct {
 
 func NewLogzioStore(config LogzioConfig, logger hclog.Logger) *Store {
 
-	//if config.Account_Token == "" {
-	//	panic("Account token can't be empty")
-	//}
-
 	reader := NewLogzioSpanReader(config.Api_Token, logger)
-	writer := NewLogzioSpanWriter(config.Account_Token, config.Listener_Host, logger)
+	writer, err := NewLogzioSpanWriter(config.Account_Token, config.Listener_Host, logger)
+	if err != nil {
+		logger.Error("Failed to create logzio span writer: " + err.Error())
+	}
 	store := &Store{
 		reader: reader,
 		writer: writer,

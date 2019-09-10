@@ -2,6 +2,7 @@ package store
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/hashicorp/go-hclog"
 	"github.com/jaegertracing/jaeger/model"
 	"github.com/jaegertracing/jaeger/plugin/storage/es/spanstore/dbmodel"
@@ -29,7 +30,6 @@ type logzioSpanWriter struct {
 	accountToken	string
 	logger   hclog.Logger
 	sender   *logzio.LogzioSender
-
 }
 
 type loggerWriter struct {
@@ -49,14 +49,9 @@ func (writer *loggerWriter) Write(msgBytes []byte) (n int, err error) {
 func (spanWriter *logzioSpanWriter) WriteSpan(span *model.Span) error {
 	spanBytes, err := transformToLogzioSpan(span)
 	if err != nil {
-		spanWriter.logger.Warn("************************************************************************************", err.Error())
+		return err
 	}
-
 	err = spanWriter.sender.Send(spanBytes)
-	if err != nil {
-		spanWriter.logger.Warn("************************************************************************************", err.Error())
-	}
-	spanWriter.sender.Drain()
 	return err
 }
 
@@ -94,7 +89,10 @@ func transformToLogzioTags(tags []model.KeyValue) map[string]interface{} {
 	return result
 }
 
-func NewLogzioSpanWriter(accountToken string, url string, logger hclog.Logger) *logzioSpanWriter {
+func NewLogzioSpanWriter(accountToken string, url string, logger hclog.Logger) (*logzioSpanWriter, error) {
+	if accountToken == "" {
+		return nil, errors.New("account token is empty, can't create span writer")
+	}
 	if url == "" {
 		url = DEFAULT_LISTENER_HOST
 	}
@@ -105,12 +103,12 @@ func NewLogzioSpanWriter(accountToken string, url string, logger hclog.Logger) *
 		logzio.SetDrainDiskThreshold(DROP_LOGS_DISK_THRESHOLD))
 
 	if err != nil {
-		logger.Warn(err.Error(), "********************************************************************")
+		return nil, err
 	}
 	spanWriter := &logzioSpanWriter{
 		accountToken:  accountToken,
 		logger: logger,
 		sender: sender,
 	}
-	return spanWriter
+	return spanWriter, err
 }
