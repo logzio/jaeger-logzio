@@ -25,7 +25,6 @@ func main() {
 
 	flag.StringVar(&configPath, "config", "", "The absolute path to the logz.io plugin's configuration file")
 	flag.Parse()
-
 	yamlFile, err := ioutil.ReadFile(configPath)
 	if err != nil {
 		logger.Error(err.Error())

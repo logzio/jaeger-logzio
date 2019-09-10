@@ -6,6 +6,7 @@ import (
 	"github.com/jaegertracing/jaeger/model"
 	"github.com/jaegertracing/jaeger/plugin/storage/es/spanstore/dbmodel"
 	"github.com/logzio/logzio-go"
+	"strings"
 )
 
 const JSON_TYPE = "type"
@@ -21,33 +22,37 @@ const VALUE_SUFFIX = ".value"
 const TYPE_SUFFIX = ".type"
 const HTTPS_PREFIX = "https://"
 const PORT_SUFFIX = ":8071"
+const DEFAULT_LISTENER_HOST = "listener.logz.io"
+const DROP_LOGS_DISK_THRESHOLD = 98
 
 type logzioSpanWriter struct {
-	accountToken string
+	accountToken	string
 	logger   hclog.Logger
 	sender   *logzio.LogzioSender
-	spanConverter    dbmodel.FromDomain
+
 }
 
 type loggerWriter struct {
 	logger   hclog.Logger
 }
 
-func (writer *loggerWriter) Write(p []byte) (n int, err error) {
-	writer.logger.Error(string(p))
-	return len(p), nil
+func (writer *loggerWriter) Write(msgBytes []byte) (n int, err error) {
+	msgString := string(msgBytes)
+	if strings.Contains(msgString, "Error") {
+		writer.logger.Error(msgString)
+	} else {
+		writer.logger.Info(msgString)
+	}
+	return len(msgBytes), nil
 }
 
 func (spanWriter *logzioSpanWriter) WriteSpan(span *model.Span) error {
-
-	err, spanBytes := spanWriter.transformToLogzioSpan(span)
-
+	spanBytes, err := transformToLogzioSpan(span)
 	if err != nil {
 		spanWriter.logger.Warn("************************************************************************************", err.Error())
 	}
 
 	err = spanWriter.sender.Send(spanBytes)
-
 	if err != nil {
 		spanWriter.logger.Warn("************************************************************************************", err.Error())
 	}
@@ -55,34 +60,32 @@ func (spanWriter *logzioSpanWriter) WriteSpan(span *model.Span) error {
 	return err
 }
 
-func (spanWriter *logzioSpanWriter) transformToLogzioSpan(span *model.Span) (error, []byte) {
-
-	spanString := spanWriter.spanConverter.FromDomainEmbedProcess(span)
+func transformToLogzioSpan(span *model.Span) ([]byte, error) {
+	spanConverter := dbmodel.FromDomain{}
+	spanString := spanConverter.FromDomainEmbedProcess(span)
 	spanBytes, err := json.Marshal(spanString)
 	if err != nil {
-		spanWriter.logger.Error(err.Error())
+		return nil, err
 	}
 	spanMap := make(map[string]interface{})
 	err = json.Unmarshal(spanBytes,&spanMap)
 	if err != nil {
-		spanWriter.logger.Error(err.Error())
+		return nil, err
 	}
 
 	delete(spanMap, JSON_TAGS)
 	delete(spanMap, JSON_PROCESS)
 	spanMap[JSON_TYPE] = JAEGER_SPAN
-	spanMap[JSON_JAEGER_TAGS] = spanWriter.transformToLogzioTags(span.Tags)
-	spanMap[JSON_PROCESS_TAGS] = spanWriter.transformToLogzioTags(span.Process.Tags)
+	spanMap[JSON_JAEGER_TAGS] = transformToLogzioTags(span.Tags)
+	spanMap[JSON_PROCESS_TAGS] = transformToLogzioTags(span.Process.Tags)
 	spanMap[JSON_PROCESS_SERVICE_NAME] = span.Process.ServiceName
 	spanMap[JSON_TIMESTAMP] = spanMap[JSON_START_TIME_MILLIS]
-	spanBytes, err = json.Marshal(spanMap)
-	return err, spanBytes
+	return json.Marshal(spanMap)
 }
 
-func (spanWriter *logzioSpanWriter) transformToLogzioTags(tags []model.KeyValue) map[string]interface{} {
+func transformToLogzioTags(tags []model.KeyValue) map[string]interface{} {
 	result := make(map[string]interface{})
 	for _, tag := range tags {
-
 		result[tag.Key + VALUE_SUFFIX] = tag.Value()
 		if tag.GetVType() != model.ValueType_STRING {
 			result[tag.Key + TYPE_SUFFIX] = tag.GetVType().String()
@@ -92,11 +95,14 @@ func (spanWriter *logzioSpanWriter) transformToLogzioTags(tags []model.KeyValue)
 }
 
 func NewLogzioSpanWriter(accountToken string, url string, logger hclog.Logger) *logzioSpanWriter {
+	if url == "" {
+		url = DEFAULT_LISTENER_HOST
+	}
 	sender, err := logzio.New(
 		accountToken,
 		logzio.SetUrl(HTTPS_PREFIX + url + PORT_SUFFIX),
 		logzio.SetDebug(&loggerWriter {logger: logger}),
-		logzio.SetDrainDiskThreshold(98))
+		logzio.SetDrainDiskThreshold(DROP_LOGS_DISK_THRESHOLD))
 
 	if err != nil {
 		logger.Warn(err.Error(), "********************************************************************")
