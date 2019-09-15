@@ -9,21 +9,18 @@ import (
 	"strings"
 )
 
-const HTTPS_PREFIX = "https://"
-const PORT_SUFFIX = ":8071"
-const DEFAULT_LISTENER_HOST = "listener.logz.io"
-const DROP_LOGS_DISK_THRESHOLD = 98
-
-type logzioSpanWriter struct {
-	accountToken	string
-	logger   hclog.Logger
-	sender   *logzio.LogzioSender
-}
+const (
+ HttpsPrefix           = "https://"
+ PortSuffix            = ":8071"
+ DefaultListenerHost   = "listener.logz.io"
+ DropLogsDiskThreshold = 98
+)
 
 type loggerWriter struct {
 	logger   hclog.Logger
 }
 
+//this is to convert between jaeger log messages and logzioSender log messages
 func (writer *loggerWriter) Write(msgBytes []byte) (n int, err error) {
 	msgString := string(msgBytes)
 	if strings.Contains(msgString, "Error") {
@@ -32,6 +29,13 @@ func (writer *loggerWriter) Write(msgBytes []byte) (n int, err error) {
 		writer.logger.Info(msgString)
 	}
 	return len(msgBytes), nil
+}
+
+
+type logzioSpanWriter struct {
+	accountToken	string
+	logger   hclog.Logger
+	sender   *logzio.LogzioSender
 }
 
 func (spanWriter *logzioSpanWriter) WriteSpan(span *model.Span) error {
@@ -43,24 +47,24 @@ func (spanWriter *logzioSpanWriter) WriteSpan(span *model.Span) error {
 	return err
 }
 
-func NewLogzioSpanWriter(accountToken string, url string, logger hclog.Logger) (*logzioSpanWriter, error) {
-	if accountToken == "" {
+func NewLogzioSpanWriter(config LogzioConfig, url string, logger hclog.Logger) (*logzioSpanWriter, error) {
+	if config.Account_Token == "" {
 		return nil, errors.New("account token is empty, can't create span writer")
 	}
 	if url == "" {
-		url = DEFAULT_LISTENER_HOST
+		url = DefaultListenerHost
 	}
 	sender, err := logzio.New(
-		accountToken,
-		logzio.SetUrl(HTTPS_PREFIX + url + PORT_SUFFIX),
+		config.Account_Token,
+		logzio.SetUrl(HttpsPrefix+ url +PortSuffix),
 		logzio.SetDebug(&loggerWriter {logger: logger}),
-		logzio.SetDrainDiskThreshold(DROP_LOGS_DISK_THRESHOLD))
+		logzio.SetDrainDiskThreshold(DropLogsDiskThreshold))
 
 	if err != nil {
 		return nil, err
 	}
 	spanWriter := &logzioSpanWriter{
-		accountToken:  accountToken,
+		accountToken:  config.Account_Token,
 		logger: logger,
 		sender: sender,
 	}

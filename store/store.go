@@ -17,8 +17,8 @@ type Store struct {
 }
 
 func NewLogzioStore(config LogzioConfig, logger hclog.Logger) *Store {
-	reader := NewLogzioSpanReader(config.Api_Token, logger)
-	writer, err := NewLogzioSpanWriter(config.Account_Token, config.Listener_Host, logger)
+	reader := NewLogzioSpanReader(config, logger)
+	writer, err := NewLogzioSpanWriter(config, config.Listener_Host, logger)
 	if err != nil {
 		logger.Error("Failed to create logzio span writer: " + err.Error())
 	}
@@ -52,7 +52,7 @@ type LogzioConfig struct {
 }
 
 func (config *LogzioConfig) String() string {
-	desc :="account token: " + config.Account_Token +
+	desc := "account token: " + config.Account_Token +
 	"\n api token: " + config.Api_Token
 	 if config.Listener_Host != "" {
 	 	desc += "\n listener host: " + config.Listener_Host

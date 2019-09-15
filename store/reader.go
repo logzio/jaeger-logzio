@@ -5,8 +5,6 @@ import (
 	"github.com/hashicorp/go-hclog"
 	"github.com/jaegertracing/jaeger/model"
 	"github.com/jaegertracing/jaeger/storage/spanstore"
-	//"github.com/opentracing/opentracing-go"
-	//otlog "github.com/opentracing/opentracing-go/log"
 	"time"
 )
 
@@ -15,10 +13,10 @@ type logzioSpanReader struct {
 	logger   hclog.Logger
 }
 
-func NewLogzioSpanReader(accountToken string, logger hclog.Logger) *logzioSpanReader {
+func NewLogzioSpanReader(config LogzioConfig, logger hclog.Logger) *logzioSpanReader {
 	return &logzioSpanReader{
 		logger:   logger,
-		apiToken: accountToken,
+		apiToken: config.Api_Token,
 	}
 }
 
