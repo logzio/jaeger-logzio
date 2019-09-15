@@ -5,7 +5,6 @@ import (
 	"github.com/hashicorp/go-hclog"
 	"github.com/jaegertracing/jaeger/model"
 	"github.com/logzio/logzio-go"
-	"jaeger-logzio/store/Utils"
 	"strings"
 )
 
@@ -39,7 +38,7 @@ type logzioSpanWriter struct {
 }
 
 func (spanWriter *logzioSpanWriter) WriteSpan(span *model.Span) error {
-	spanBytes, err := Utils.TransformToLogzioSpan(span)
+	spanBytes, err := TransformToLogzioSpan(span)
 	if err != nil {
 		return err
 	}

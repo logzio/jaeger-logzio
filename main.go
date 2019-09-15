@@ -33,6 +33,7 @@ func main() {
 		err = yaml.Unmarshal(yamlFile, &logzioConfig)
 		if err != nil {
 			logger.Error(err.Error())
+			panic(err.Error())
 		}
 	}
 	logzioStore := store.NewLogzioStore(logzioConfig, logger)
