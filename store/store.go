@@ -2,23 +2,20 @@ package store
 
 import (
 	"github.com/hashicorp/go-hclog"
-	"github.com/jaegertracing/jaeger/plugin/storage/grpc/shared"
 	"github.com/jaegertracing/jaeger/storage/dependencystore"
 	"github.com/jaegertracing/jaeger/storage/spanstore"
 )
 
-var (
-	_ shared.StoragePlugin = (*Store)(nil)
-)
-
+// Store is span store struct for logzio jaeger span storage
 type Store struct {
-	reader *logzioSpanReader
-	writer *logzioSpanWriter
+	reader *LogzioSpanReader
+	writer *LogzioSpanWriter
 }
 
+// NewLogzioStore creates a new logzio span store for jaeger
 func NewLogzioStore(config LogzioConfig, logger hclog.Logger) *Store {
 	reader := NewLogzioSpanReader(config, logger)
-	writer, err := NewLogzioSpanWriter(config, config.Listener_Host, logger)
+	writer, err := NewLogzioSpanWriter(config, config.ListenerHost, logger)
 	if err != nil {
 		logger.Error("Failed to create logzio span writer: " + err.Error())
 	}
@@ -33,30 +30,17 @@ func NewLogzioStore(config LogzioConfig, logger hclog.Logger) *Store {
 //	return s.writer.Close()
 //}
 
+// SpanReader returns the created logzio span reader
 func (store *Store) SpanReader() spanstore.Reader {
 	return store.reader
 }
 
+// SpanWriter returns the created logzio span writer
 func (store *Store) SpanWriter() spanstore.Writer {
 	return store.writer
 }
 
+// DependencyReader return the created logzio dependency store
 func (store *Store) DependencyReader() dependencystore.Reader {
 	return store.reader
 }
-
-type LogzioConfig struct {
-	Account_Token string
-	Api_Token     string
-	Listener_Host string
-}
-
-func (config *LogzioConfig) String() string {
-	desc := "account token: " + config.Account_Token +
-	"\n api token: " + config.Api_Token
-	 if config.Listener_Host != "" {
-	 	desc += "\n listener host: " + config.Listener_Host
-	 }
-	return desc
-}
-

@@ -1,28 +1,29 @@
 package store
 
 import (
-	"errors"
+	"strings"
+
+	"github.com/logzio/logzio-go"
+
 	"github.com/hashicorp/go-hclog"
 	"github.com/jaegertracing/jaeger/model"
-	"github.com/logzio/logzio-go"
-	"strings"
 )
 
 const (
- HttpsPrefix           = "https://"
- PortSuffix            = ":8071"
- DefaultListenerHost   = "listener.logz.io"
- DropLogsDiskThreshold = 98
+	httpsPrefix           = "https://"
+	portSuffix            = ":8071"
+	defaultListenerHost   = "listener.logz.io"
+	dropLogsDiskThreshold = 98
 )
 
 type loggerWriter struct {
-	logger   hclog.Logger
+	logger hclog.Logger
 }
 
 //this is to convert between jaeger log messages and logzioSender log messages
 func (writer *loggerWriter) Write(msgBytes []byte) (n int, err error) {
 	msgString := string(msgBytes)
-	if strings.Contains(msgString, "Error") {
+	if strings.Contains(strings.ToLower(msgString), "error") {
 		writer.logger.Error(msgString)
 	} else {
 		writer.logger.Info(msgString)
@@ -30,14 +31,15 @@ func (writer *loggerWriter) Write(msgBytes []byte) (n int, err error) {
 	return len(msgBytes), nil
 }
 
-
-type logzioSpanWriter struct {
-	accountToken	string
-	logger   hclog.Logger
-	sender   *logzio.LogzioSender
+// LogzioSpanWriter is a struct which holds logzio span writer properties
+type LogzioSpanWriter struct {
+	accountToken string
+	logger       hclog.Logger
+	sender       *logzio.LogzioSender
 }
 
-func (spanWriter *logzioSpanWriter) WriteSpan(span *model.Span) error {
+// WriteSpan receives a Jaeger span, converts it to logzio span and send it to logzio
+func (spanWriter *LogzioSpanWriter) WriteSpan(span *model.Span) error {
 	spanBytes, err := TransformToLogzioSpan(span)
 	if err != nil {
 		return err
@@ -46,26 +48,24 @@ func (spanWriter *logzioSpanWriter) WriteSpan(span *model.Span) error {
 	return err
 }
 
-func NewLogzioSpanWriter(config LogzioConfig, url string, logger hclog.Logger) (*logzioSpanWriter, error) {
-	if config.Account_Token == "" {
-		return nil, errors.New("account token is empty, can't create span writer")
-	}
+// NewLogzioSpanWriter creates a new logzio span writer for jaeger
+func NewLogzioSpanWriter(config LogzioConfig, url string, logger hclog.Logger) (*LogzioSpanWriter, error) {
 	if url == "" {
-		url = DefaultListenerHost
+		url = defaultListenerHost
 	}
 	sender, err := logzio.New(
-		config.Account_Token,
-		logzio.SetUrl(HttpsPrefix+ url +PortSuffix),
-		logzio.SetDebug(&loggerWriter {logger: logger}),
-		logzio.SetDrainDiskThreshold(DropLogsDiskThreshold))
+		config.AccountToken,
+		logzio.SetUrl(httpsPrefix+url+portSuffix),
+		logzio.SetDebug(&loggerWriter{logger: logger}),
+		logzio.SetDrainDiskThreshold(dropLogsDiskThreshold))
 
 	if err != nil {
 		return nil, err
 	}
-	spanWriter := &logzioSpanWriter{
-		accountToken:  config.Account_Token,
-		logger: logger,
-		sender: sender,
+	spanWriter := &LogzioSpanWriter{
+		accountToken: config.AccountToken,
+		logger:       logger,
+		sender:       sender,
 	}
 	return spanWriter, err
 }

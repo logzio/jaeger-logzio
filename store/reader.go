@@ -2,25 +2,29 @@ package store
 
 import (
 	"context"
+	"time"
+
 	"github.com/hashicorp/go-hclog"
 	"github.com/jaegertracing/jaeger/model"
 	"github.com/jaegertracing/jaeger/storage/spanstore"
-	"time"
 )
 
-type logzioSpanReader struct {
+// LogzioSpanReader is a struct which holds logzio span reader properties
+type LogzioSpanReader struct {
 	apiToken string
 	logger   hclog.Logger
 }
 
-func NewLogzioSpanReader(config LogzioConfig, logger hclog.Logger) *logzioSpanReader {
-	return &logzioSpanReader{
+// NewLogzioSpanReader creates a new logzio span reader
+func NewLogzioSpanReader(config LogzioConfig, logger hclog.Logger) *LogzioSpanReader {
+	return &LogzioSpanReader{
 		logger:   logger,
-		apiToken: config.Api_Token,
+		apiToken: config.ApiToken,
 	}
 }
 
-func (sr *logzioSpanReader) GetTrace(ctx context.Context, traceID model.TraceID) (*model.Trace, error) {
+// GetTrace returns a Jaeger trace by traceID
+func (sr *LogzioSpanReader) GetTrace(ctx context.Context, traceID model.TraceID) (*model.Trace, error) {
 	//span, ctx := opentracing.StartSpanFromContext(ctx, "GetTrace")
 	//defer span.Finish()
 	//currentTime := time.Now()
@@ -35,27 +39,32 @@ func (sr *logzioSpanReader) GetTrace(ctx context.Context, traceID model.TraceID)
 	return nil, nil
 }
 
-func (*logzioSpanReader) GetServices(ctx context.Context) ([]string, error) {
+// GetServices returns an array of all the service named that are being monitored
+func (*LogzioSpanReader) GetServices(ctx context.Context) ([]string, error) {
 	return nil, nil
 }
 
-func (*logzioSpanReader) GetOperations(ctx context.Context, service string) ([]string, error) {
+// GetOperations returns an array of all the operation a specific service performed
+func (*LogzioSpanReader) GetOperations(ctx context.Context, service string) ([]string, error) {
 	return nil, nil
 }
 
-func (*logzioSpanReader) FindTraces(ctx context.Context, query *spanstore.TraceQueryParameters) ([]*model.Trace, error) {
+// FindTraces return an array of Jaeger traces by a search query
+func (*LogzioSpanReader) FindTraces(ctx context.Context, query *spanstore.TraceQueryParameters) ([]*model.Trace, error) {
 	return nil, nil
 }
 
-func (*logzioSpanReader) FindTraceIDs(ctx context.Context, query *spanstore.TraceQueryParameters) ([]model.TraceID, error) {
+// FindTraceIDs returns an array of traceIds by a search query
+func (*LogzioSpanReader) FindTraceIDs(ctx context.Context, query *spanstore.TraceQueryParameters) ([]model.TraceID, error) {
 	return nil, nil
 }
 
-func (*logzioSpanReader) GetDependencies(endTs time.Time, lookback time.Duration) ([]model.DependencyLink, error) {
+// GetDependencies returns an array of all the dependencies in a specific time range
+func (*LogzioSpanReader) GetDependencies(endTs time.Time, lookback time.Duration) ([]model.DependencyLink, error) {
 	return nil, nil
 }
 
-//func (sr *logzioSpanReader) multiRead(ctx context.Context, traceIDs []model.TraceID, startTime, endTime time.Time) ([]*model.Trace, error) {
+//func (sr *LogzioSpanReader) multiRead(ctx context.Context, traceIDs []model.TraceID, startTime, endTime time.Time) ([]*model.Trace, error) {
 //
 //	childSpan, _ := opentracing.StartSpanFromContext(ctx, "multiRead")
 //	childSpan.LogFields(otlog.Object("trace_ids", traceIDs))

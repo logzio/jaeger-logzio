@@ -145,11 +145,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:4a3ef3d1c9fefbde3c213e2b1e602a19ec69b5a2b581f6e2fef69a7048794154"
+  digest = "1:9881d2f5be064682e6ab90b9f4e66f875d6cf22d4a099c0665f8cac4f21a9921"
   name = "github.com/logzio/logzio-go"
   packages = ["."]
   pruneopts = "UT"
-  revision = "7198eaa465fde82b2b52e1ad346ceb24c0061e1b"
+  revision = "4cd568a9b6d6fcfe3cf9da2d84b684dac6f325cd"
 
 [[projects]]
   digest = "1:5a0ef768465592efca0412f7e838cdc0826712f8447e70e6ccc52eb441e9ab13"
