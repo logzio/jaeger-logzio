@@ -34,4 +34,5 @@ func main() {
 
 	logzioStore := store.NewLogzioStore(logzioConfig, logger)
 	grpc.Serve(logzioStore)
+	logzioStore.Close()
 }

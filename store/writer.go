@@ -48,6 +48,11 @@ func (spanWriter *LogzioSpanWriter) WriteSpan(span *model.Span) error {
 	return err
 }
 
+// Close stops and drain logzio sender
+func (spanWriter *LogzioSpanWriter) Close() {
+	spanWriter.sender.Stop()
+}
+
 // NewLogzioSpanWriter creates a new logzio span writer for jaeger
 func NewLogzioSpanWriter(config LogzioConfig, url string, logger hclog.Logger) (*LogzioSpanWriter, error) {
 	if url == "" {

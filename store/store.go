@@ -26,9 +26,10 @@ func NewLogzioStore(config LogzioConfig, logger hclog.Logger) *Store {
 	return store
 }
 
-//func (s *Store) Close() error {
-//	return s.writer.Close()
-//}
+// Close the span store
+func (store *Store) Close() {
+	store.writer.Close()
+}
 
 // SpanReader returns the created logzio span reader
 func (store *Store) SpanReader() spanstore.Reader {
