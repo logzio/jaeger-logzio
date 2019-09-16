@@ -19,7 +19,7 @@ type LogzioSpanReader struct {
 func NewLogzioSpanReader(config LogzioConfig, logger hclog.Logger) *LogzioSpanReader {
 	return &LogzioSpanReader{
 		logger:   logger,
-		apiToken: config.ApiToken,
+		apiToken: config.APIToken,
 	}
 }
 
