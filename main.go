@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"jaeger-logzio/store"
+	"os"
 
 	"github.com/hashicorp/go-hclog"
 	"github.com/jaegertracing/jaeger/plugin/storage/grpc"
@@ -24,12 +25,12 @@ func main() {
 	logzioConfig, err := store.ParseConfig(configPath)
 	if err != nil {
 		logger.Error("can't parse config: ", err.Error())
-		panic(err)
+		os.Exit(0)
 	}
 	err = logzioConfig.Validate()
 	if err != nil {
 		logger.Error(err.Error())
-		panic(err)
+		os.Exit(0)
 	}
 
 	logzioStore := store.NewLogzioStore(logzioConfig, logger)

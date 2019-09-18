@@ -15,7 +15,7 @@ type Store struct {
 // NewLogzioStore creates a new logzio span store for jaeger
 func NewLogzioStore(config LogzioConfig, logger hclog.Logger) *Store {
 	reader := NewLogzioSpanReader(config, logger)
-	writer, err := NewLogzioSpanWriter(config, config.ListenerHost, logger)
+	writer, err := NewLogzioSpanWriter(config, logger)
 	if err != nil {
 		logger.Error("Failed to create logzio span writer: " + err.Error())
 	}

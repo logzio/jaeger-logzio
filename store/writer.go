@@ -10,9 +10,6 @@ import (
 )
 
 const (
-	httpsPrefix           = "https://"
-	portSuffix            = ":8071"
-	defaultListenerHost   = "listener.logz.io"
 	dropLogsDiskThreshold = 98
 )
 
@@ -40,12 +37,11 @@ type LogzioSpanWriter struct {
 
 // WriteSpan receives a Jaeger span, converts it to logzio span and send it to logzio
 func (spanWriter *LogzioSpanWriter) WriteSpan(span *model.Span) error {
-	spanBytes, err := TransformToLogzioSpan(span)
+	spanBytes, err := TransformToLogzioSpanBytes(span)
 	if err != nil {
 		return err
 	}
-	err = spanWriter.sender.Send(spanBytes)
-	return err
+	return spanWriter.sender.Send(spanBytes)
 }
 
 // Close stops and drain logzio sender
@@ -54,13 +50,10 @@ func (spanWriter *LogzioSpanWriter) Close() {
 }
 
 // NewLogzioSpanWriter creates a new logzio span writer for jaeger
-func NewLogzioSpanWriter(config LogzioConfig, url string, logger hclog.Logger) (*LogzioSpanWriter, error) {
-	if url == "" {
-		url = defaultListenerHost
-	}
+func NewLogzioSpanWriter(config LogzioConfig, logger hclog.Logger) (*LogzioSpanWriter, error) {
 	sender, err := logzio.New(
 		config.AccountToken,
-		logzio.SetUrl(httpsPrefix+url+portSuffix),
+		logzio.SetUrl(config.ListenerHost),
 		logzio.SetDebug(&loggerWriter{logger: logger}),
 		logzio.SetDrainDiskThreshold(dropLogsDiskThreshold))
 
@@ -72,5 +65,5 @@ func NewLogzioSpanWriter(config LogzioConfig, url string, logger hclog.Logger) (
 		logger:       logger,
 		sender:       sender,
 	}
-	return spanWriter, err
+	return spanWriter, nil
 }

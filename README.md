@@ -7,5 +7,5 @@ go build
 ```
 Run:
 ```
-SPAN_STORAGE_TYPE=grpc-plugin jager-all-in-one --grpc-storage-plugin.binary ~/logzio/jaeger-logzio/jaeger-logzio  --grpc-storage-plugin.configuration-file ~/logzio/jaeger-logzio/config.yaml
+SPAN_STORAGE_TYPE=grpc-plugin jager-all-in-one --grpc-storage-plugin.binary ~/path/to/jaeger-logzio  --grpc-storage-plugin.configuration-file ~/path/to/config.yaml
 ```

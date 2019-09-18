@@ -7,6 +7,12 @@ import (
 	"jaeger-logzio/_vendor-20190915113043/github.com/pkg/errors"
 )
 
+const (
+	httpsPrefix         = "https://"
+	portSuffix          = ":8071"
+	defaultListenerHost = "listener.logz.io"
+)
+
 // LogzioConfig struct for logzio span store
 type LogzioConfig struct {
 	AccountToken string `yaml:"accountToken"`
@@ -19,6 +25,12 @@ func (config *LogzioConfig) Validate() error {
 	if config.AccountToken == "" {
 		return errors.New("account token is empty, can't create span writer")
 	}
+
+	if config.ListenerHost == "" {
+		config.ListenerHost = httpsPrefix + defaultListenerHost + portSuffix
+	} else {
+		config.ListenerHost = httpsPrefix + config.ListenerHost + portSuffix
+	}
 	return nil
 }
 
@@ -26,9 +38,10 @@ func (config *LogzioConfig) Validate() error {
 func ParseConfig(filePath string) (LogzioConfig, error) {
 	logzioConfig := LogzioConfig{}
 	yamlFile, err := ioutil.ReadFile(filePath)
-	if err == nil {
-		err = yaml.Unmarshal(yamlFile, &logzioConfig)
+	if err != nil {
+		return logzioConfig, err
 	}
+	err = yaml.Unmarshal(yamlFile, &logzioConfig)
 	return logzioConfig, err
 }
 
