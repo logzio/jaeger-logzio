@@ -3,8 +3,8 @@ package store
 import (
 	"io/ioutil"
 
+	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
-	"jaeger-logzio/_vendor-20190915113043/github.com/pkg/errors"
 )
 
 const (
