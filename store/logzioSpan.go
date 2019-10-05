@@ -14,34 +14,40 @@ const (
 	typeSuffix          = ".type"
 	serviceNameProperty = "serviceName"
 	tagsProperty        = "tags"
+	jaegerType			= "jaegerSpan"
 )
 
 type logzioSpan struct {
-	TraceID         dbmodel.TraceID        `json:"trace_id"`
-	OperationName   string                 `json:"operation_name,omitempty"`
-	SpanID          dbmodel.SpanID         `json:"span_id"`
-	References      []dbmodel.Reference    `json:"references"`
+	TraceID         dbmodel.TraceID        `json:"traceId"`
+	OperationName   string                 `json:"operationName,omitempty"`
+	SpanID          dbmodel.SpanID         `json:"spanId"`
+	References      []dbmodel.Reference    `json:"references,omitempty"` //References can be empty when the span is a root
 	Flags           uint32                 `json:"flags"`
-	StartTime       uint64                 `json:"start_time"`
-	StartTimeMillis uint64                 `json:"start_time"`
+	StartTime       uint64                 `json:"startTime"`
+	StartTimeMillis uint64                 `json:"startTimeMillis"`
 	Timestamp       uint64                 `json:"@timestamp"`
 	Duration        uint64                 `json:"duration"`
 	Tags            map[string]interface{} `json:"JaegerTags"`
-	Logs            []dbmodel.Log          `json:"logs"`
+	Logs            []dbmodel.Log          `json:"logs,omitempty"`
 	Process         map[string]interface{} `json:"process,omitempty"`
-	Errors          int                    `json:"errors,omitempty"`
-	Fatals          int                    `json:"fatals,omitempty"`
+	Errors          int                    `json:"errors"`
+	Fatals          int                    `json:"fatals"`
+	Type			string				   `json:"type"`
+	Warnings		[]string			   `json:"warnings"`
 }
 
 // TransformToLogzioSpanBytes receives Jaeger span, converts it logzio span and return it as byte array.
 // The main differences between Jaeger span and logzio span are arrays which are represented as maps
 func TransformToLogzioSpanBytes(span *model.Span) ([]byte, error) {
+	// todo - check with Yogev why it's always empty.
+	spanWarnings := span.Warnings
 	spanConverter := dbmodel.FromDomain{}
 	jsonSpan := spanConverter.FromDomainEmbedProcess(span)
 	spanProcess := make(map[string]interface{})
 	spanProcess[serviceNameProperty] = jsonSpan.Process.ServiceName
 	spanProcess[tagsProperty] = transformToLogzioTags(span.Process.Tags)
-	logzioSpan := logzioSpan{
+	errorCount, fatelCount := getLogLevelsCount(span.Logs)
+	logzioSpan := logzioSpan {
 		TraceID:         jsonSpan.TraceID,
 		OperationName:   jsonSpan.OperationName,
 		SpanID:          jsonSpan.SpanID,
@@ -53,22 +59,31 @@ func TransformToLogzioSpanBytes(span *model.Span) ([]byte, error) {
 		Duration:        jsonSpan.Duration,
 		Tags:            transformToLogzioTags(span.Tags),
 		Process:         spanProcess,
-		Errors:          getLogLevelCount(span.Logs, levelError),
-		Fatals:          getLogLevelCount(span.Logs, levelFatal),
+		Errors:          errorCount,
+		Fatals:          fatelCount,
+		Type:			 jaegerType,
+		Logs:			 jsonSpan.Logs,
+		Warnings:		 spanWarnings,
 	}
 	return json.Marshal(logzioSpan)
 }
 
-func getLogLevelCount(logs []model.Log, level string) int {
-	levelCount := 0
+func getLogLevelsCount(logs []model.Log) (int, int) {
+	errs := 0
+	fatels := 0
 	for _, log := range logs {
 		for _, field := range log.Fields {
-			if field.Key == "level" && field.Value() == level {
-				levelCount++
+			if field.Key == "level" {
+				if field.Value() == levelError {
+					errs++
+				} else if field.Value() == levelFatal {
+					fatels++
+				}
+				// todo - check if we can use break here(saves time) and assume only one log level per log.
 			}
 		}
 	}
-	return levelCount
+	return errs, fatels
 }
 
 func transformToLogzioTags(tags []model.KeyValue) map[string]interface{} {
