@@ -2,7 +2,6 @@ package store
 
 import (
 	"encoding/json"
-
 	"github.com/jaegertracing/jaeger/model"
 	"github.com/jaegertracing/jaeger/plugin/storage/es/spanstore/dbmodel"
 )
@@ -15,6 +14,8 @@ const (
 	serviceNameProperty = "serviceName"
 	tagsProperty        = "tags"
 	jaegerType			= "jaegerSpan"
+	referencesRootLocation = 0
+	referenceRootID = "0"
 )
 
 type logzioSpan struct {
@@ -33,7 +34,7 @@ type logzioSpan struct {
 	Errors          int                    `json:"errors"`
 	Fatals          int                    `json:"fatals"`
 	Type			string				   `json:"type"`
-	Warnings		[]string			   `json:"warnings"`
+	Warnings		[]string			   `json:"warnings,omitempty"`
 }
 
 // TransformToLogzioSpanBytes receives Jaeger span, converts it logzio span and return it as byte array.
@@ -41,17 +42,19 @@ type logzioSpan struct {
 func TransformToLogzioSpanBytes(span *model.Span) ([]byte, error) {
 	// todo - check with Yogev why it's always empty.
 	spanWarnings := span.Warnings
+
 	spanConverter := dbmodel.FromDomain{}
 	jsonSpan := spanConverter.FromDomainEmbedProcess(span)
 	spanProcess := make(map[string]interface{})
 	spanProcess[serviceNameProperty] = jsonSpan.Process.ServiceName
 	spanProcess[tagsProperty] = transformToLogzioTags(span.Process.Tags)
 	errorCount, fatelCount := getLogLevelsCount(span.Logs)
-	logzioSpan := logzioSpan {
+
+	logzioSpan := logzioSpan{
 		TraceID:         jsonSpan.TraceID,
 		OperationName:   jsonSpan.OperationName,
 		SpanID:          jsonSpan.SpanID,
-		References:      jsonSpan.References,
+		References:      getReferences(jsonSpan),
 		Flags:           jsonSpan.Flags,
 		StartTime:       jsonSpan.StartTime,
 		StartTimeMillis: jsonSpan.StartTimeMillis,
@@ -61,11 +64,22 @@ func TransformToLogzioSpanBytes(span *model.Span) ([]byte, error) {
 		Process:         spanProcess,
 		Errors:          errorCount,
 		Fatals:          fatelCount,
-		Type:			 jaegerType,
-		Logs:			 jsonSpan.Logs,
-		Warnings:		 spanWarnings,
+		Type:            jaegerType,
+		Logs:            jsonSpan.Logs,
+		Warnings:        spanWarnings,
 	}
 	return json.Marshal(logzioSpan)
+}
+
+func getReferences(jsonSpan *dbmodel.Span) []dbmodel.Reference {
+	// This will help us with visualizations in Kibana.
+	// We now can recognize the root by knowing that key `references` doesn't exists.
+	references := jsonSpan.References
+	if references[referencesRootLocation].SpanID == referenceRootID &&
+		references[referencesRootLocation].TraceID == referenceRootID {
+		references = nil
+	}
+	return references
 }
 
 func getLogLevelsCount(logs []model.Log) (int, int) {
