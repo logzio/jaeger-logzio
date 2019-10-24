@@ -14,7 +14,6 @@ Build jaeger all in one binary:
 ```
 git clone https://github.com/jaegertracing/jaeger
 cd https://github.com/jaegertracing/jaeger/cmd/all-in-one
-git checkout v1.12.0
 go build
 ```
 
