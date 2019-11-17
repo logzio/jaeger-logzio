@@ -2,7 +2,6 @@ package store
 
 import (
 	"encoding/json"
-
 	"github.com/jaegertracing/jaeger/model"
 	"github.com/jaegertracing/jaeger/plugin/storage/es/spanstore/dbmodel"
 )

@@ -11,8 +11,8 @@ const serviceLogType = "jaegerService"
 
 //LogzioService type, for query purposes
 type LogzioService struct {
-	OperationName string `json:"serviceName"`
-	ServiceName   string `json:"operationName"`
+	OperationName string `json:"operationName"`
+	ServiceName   string `json:"serviceName"`
 	Type          string `json:"type"`
 }
 
