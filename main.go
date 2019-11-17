@@ -17,7 +17,7 @@ const (
 	accountTokenParam  = "accountToken"
 	apiTokenParam      = "apiToken"
 	listenerURLParam   = "listenerHost"
-	EmptyString        = ""
+	emptyString        = ""
 )
 
 func main() {
@@ -35,7 +35,7 @@ func main() {
 	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	v.AutomaticEnv()
 	v.SetDefault(listenerURLParam, defaultListenerURL)
-	v.SetDefault(apiTokenParam, EmptyString)
+	v.SetDefault(apiTokenParam, emptyString)
 
 	var logzioConfig store.LogzioConfig
 	var err error
