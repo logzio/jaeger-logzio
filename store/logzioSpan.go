@@ -7,12 +7,6 @@ import (
 )
 
 const (
-	levelFatal          = "fatal"
-	levelError          = "error"
-	valueSuffix         = ".value"
-	typeSuffix          = ".type"
-	serviceNameProperty = "serviceName"
-	tagsProperty        = "tags"
 	spanLogType         = "jaegerSpan"
 )
 
@@ -31,8 +25,6 @@ type logzioSpan struct {
 	Logs            []dbmodel.Log          `json:"logs"`
 	Process         dbmodel.Process        `json:"process,omitempty"`
 	Type            string                 `json:"type"`
-	//Errors          int                    `json:"errors,omitempty"`
-	//Fatals          int                    `json:"fatals,omitempty"`
 }
 
 func getTagsValues(tags []model.KeyValue) []string {
@@ -48,9 +40,6 @@ func getTagsValues(tags []model.KeyValue) []string {
 func TransformToLogzioSpanBytes(span *model.Span) ([]byte, error) {
 	spanConverter := dbmodel.NewFromDomain(true, getTagsValues(span.Tags), "@")
 	jsonSpan := spanConverter.FromDomainEmbedProcess(span)
-	spanProcess := make(map[string]interface{})
-	spanProcess[serviceNameProperty] = jsonSpan.Process.ServiceName
-	spanProcess[tagsProperty] = transformToLogzioTags(span.Process.Tags)
 	logzioSpan := logzioSpan{
 		TraceID:         jsonSpan.TraceID,
 		OperationName:   jsonSpan.OperationName,
@@ -65,31 +54,6 @@ func TransformToLogzioSpanBytes(span *model.Span) ([]byte, error) {
 		Tag:             jsonSpan.Tag,
 		Process:         jsonSpan.Process,
 		Type:            spanLogType,
-		//Errors:          getLogLevelCount(span.Logs, levelError),
-		//Fatals:          getLogLevelCount(span.Logs, levelFatal),
 	}
 	return json.Marshal(logzioSpan)
-}
-
-func getLogLevelCount(logs []model.Log, level string) int {
-	levelCount := 0
-	for _, log := range logs {
-		for _, field := range log.Fields {
-			if field.Key == "level" && field.Value() == level {
-				levelCount++
-			}
-		}
-	}
-	return levelCount
-}
-
-func transformToLogzioTags(tags []model.KeyValue) map[string]interface{} {
-	logzioTags := make(map[string]interface{})
-	for _, tag := range tags {
-		logzioTags[tag.Key+valueSuffix] = tag.Value()
-		if tag.GetVType() != model.ValueType_STRING {
-			logzioTags[tag.Key+typeSuffix] = tag.GetVType().String()
-		}
-	}
-	return logzioTags
 }
