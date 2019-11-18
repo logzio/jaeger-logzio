@@ -33,9 +33,9 @@ func main() {
 
 	v := viper.New()
 	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-	v.AutomaticEnv()
 	v.SetDefault(listenerURLParam, defaultListenerURL)
 	v.SetDefault(apiTokenParam, emptyString)
+	v.AutomaticEnv()
 
 	var logzioConfig store.LogzioConfig
 	var err error
