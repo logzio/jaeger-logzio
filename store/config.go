@@ -20,12 +20,12 @@ type LogzioConfig struct {
 
 // Validate logzio config, return error if invalid
 func (config *LogzioConfig) Validate() error {
-	if config.AccountToken == "" {
-		return errors.New("account token is empty, can't create span writer")
-	}
-
 	if config.ListenerURL == "" {
 		config.ListenerURL = defaultListenerURL
+	}
+
+	if config.AccountToken == "" {
+		return errors.New("account token is empty, can't create span writer")
 	}
 
 	return nil
@@ -46,7 +46,7 @@ func (config *LogzioConfig) String() string {
 	desc := "account token: " + config.AccountToken +
 		"\n api token: " + config.APIToken
 	if config.ListenerURL != "" {
-		desc += "\n listener host: " + config.ListenerURL
+		desc += "\n listener url: " + config.ListenerURL
 	}
 	return desc
 }

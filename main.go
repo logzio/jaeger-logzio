@@ -16,7 +16,7 @@ const (
 	defaultListenerURL = "https://listener.logz.io:8071"
 	accountTokenParam  = "accountToken"
 	apiTokenParam      = "apiToken"
-	listenerURLParam   = "listenerHost"
+	listenerURLParam   = "listenerURL"
 	emptyString        = ""
 )
 

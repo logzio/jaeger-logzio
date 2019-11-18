@@ -9,10 +9,10 @@ Run the command below 👇 with the following parameters:
 | Parameter | Description |
 |---|---|
 | ACCOUNTTOKEN | **Required**. Your Logz.io [account token](https://app.logz.io/#/dashboard/settings/manage-accounts) <br> Replace `<<ACCOUNT-TOKEN>>` with the [token](https://app.logz.io/#/dashboard/settings/general) of the account you want to ship to. |
-| LISTENERHOST | **Default**: `https://listener.logz.io:8071` <br>  Listener URL and port.Replace `listener.logz.io` with your region's listener host. For more information on finding your account's region, see [Account region](https://docs.logz.io/user-guide/accounts/account-region.html). |
+| LISTENERURL | **Default**: `https://listener.logz.io:8071` <br>  Listener URL and port. Replace `listener.logz.io` with your region's listener host. For more information on finding your account's region, see [Account region](https://docs.logz.io/user-guide/accounts/account-region.html). |
 
 ```
-docker run -d -e ACCOUNTTOKEN=<<ACCOUNT_TOKEN>> -e LISTENERHOST=https://listener.logz.io:8071 -p 5775:5775/udp \                                                             yogevmets@ip-192-168-30-13
+docker run -d -e ACCOUNTTOKEN=<<ACCOUNT_TOKEN>> -e LISTENERURL=https://listener.logz.io:8071 -p 5775:5775/udp \                                                             yogevmets@ip-192-168-30-13
   -p 6831:6831/udp \
   -p 6832:6832/udp \
   -p 5778:5778 \
