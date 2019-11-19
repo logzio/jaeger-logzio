@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 docker run -d -e ACCOUNTTOKEN=<<ACCOUNT_TOKEN>> -e LISTENERURL=https://listener.logz.io:8071 -p 5775:5775/udp \
   -p 6831:6831/udp \
   -p 6832:6832/udp \
