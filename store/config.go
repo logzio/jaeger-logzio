@@ -2,9 +2,10 @@ package store
 
 import (
 	"fmt"
-	"github.com/spf13/viper"
 	"io/ioutil"
 	"strings"
+
+	"github.com/spf13/viper"
 
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
@@ -47,20 +48,19 @@ func ParseConfig(filePath string) (LogzioConfig, error) {
 		}
 		err = yaml.Unmarshal(yamlFile, &logzioConfig)
 		return logzioConfig, err
-	} else {
-		v := viper.New()
-		v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-		v.SetDefault(listenerURLParam, defaultListenerURL)
-		v.SetDefault(apiTokenParam, "")
-		v.AutomaticEnv()
-
-		logzioConfig := LogzioConfig{
-			ListenerURL:  v.GetString(listenerURLParam),
-			AccountToken: v.GetString(accountTokenParam),
-			APIToken:     v.GetString(apiTokenParam),
-		}
-		return logzioConfig, nil
 	}
+	v := viper.New()
+	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	v.SetDefault(listenerURLParam, defaultListenerURL)
+	v.SetDefault(apiTokenParam, "")
+	v.AutomaticEnv()
+
+	logzioConfig := LogzioConfig{
+		ListenerURL:  v.GetString(listenerURLParam),
+		AccountToken: v.GetString(accountTokenParam),
+		APIToken:     v.GetString(apiTokenParam),
+	}
+	return logzioConfig, nil
 }
 
 func (config *LogzioConfig) String() string {
