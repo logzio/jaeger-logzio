@@ -26,9 +26,8 @@ func NewLogzioService(span *model.Span) LogzioService {
 	return service
 }
 
-func (service *LogzioService) hashCode() string {
+func (service *LogzioService) hashCode() (string, error) {
 	h := fnv.New64a()
-	h.Write([]byte(service.ServiceName))
-	h.Write([]byte(service.OperationName))
-	return fmt.Sprintf("%x", h.Sum64())
+	_, err := h.Write(append([]byte(service.ServiceName), []byte(service.OperationName)...))
+	return fmt.Sprintf("%x", h.Sum64()), err
 }

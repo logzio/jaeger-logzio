@@ -7,9 +7,7 @@ import (
 	"github.com/jaegertracing/jaeger/plugin/storage/es/spanstore/dbmodel"
 )
 
-const (
-	spanLogType = "jaegerSpan"
-)
+const spanLogType = "jaegerSpan"
 
 type logzioSpan struct {
 	TraceID         dbmodel.TraceID        `json:"traceID"`

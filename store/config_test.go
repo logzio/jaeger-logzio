@@ -4,6 +4,11 @@ import (
 	"testing"
 )
 
+const (
+	testToken = "testToken"
+	testURL = "testURL"
+)
+
 func TestValidate(tester *testing.T) {
 	config := LogzioConfig{
 		AccountToken:	"",
@@ -18,23 +23,23 @@ func TestValidate(tester *testing.T) {
 		tester.Errorf("listener url incorrect, got: %s, expected: https://listener.logz.io:8071", config.ListenerURL)
 	}
 
-	config.ListenerURL = "fakeURL"
+	config.ListenerURL = testURL
 	config.Validate()
-	if config.ListenerURL != "fakeURL" {
+	if config.ListenerURL != testURL {
 		tester.Error("listener url changed, should have stayed the same")
 	}
 }
 
 func TestParseConfig(tester *testing.T) {
-	config, err := ParseConfig("../testConfig.yaml")
+	config, err := ParseConfig("fixtures/testConfig.yaml")
 	if err != nil {
 		tester.Errorf("error parsing config file: %s", err.Error())
 		return
 	}
-	if config.ListenerURL != "testURL" {
+	if config.ListenerURL != testURL {
 		tester.Errorf("wrong listener, expected: testURL, got: %s", config.ListenerURL)
 	}
-	if config.AccountToken != "fakeToken" {
-		tester.Errorf("wrong account token, expected: fakeToken, got: %s", config.AccountToken)
+	if config.AccountToken != testToken {
+		tester.Errorf("wrong account token, expected: testToken, got: %s", config.AccountToken)
 	}
 }

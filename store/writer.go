@@ -76,9 +76,9 @@ func (spanWriter *LogzioSpanWriter) WriteSpan(span *model.Span) error {
 		return err
 	}
 	service := NewLogzioService(span)
-	serviceHash := service.hashCode()
+	serviceHash, err := service.hashCode()
 
-	if spanWriter.serviceCache.Get(serviceHash) == nil {
+	if spanWriter.serviceCache.Get(serviceHash) == nil || err != nil {
 		spanWriter.serviceCache.Put(serviceHash, serviceHash)
 		serviceBytes, err := json.Marshal(service)
 		if err != nil {
