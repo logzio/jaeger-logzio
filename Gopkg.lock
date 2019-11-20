@@ -126,10 +126,12 @@
   revision = "2f1d1f20f75d5404f53b9edf6b53ed5505508675"
 
 [[projects]]
-  digest = "1:64959bebc6c731d434c24b8825dd26bf1d58cdf29fcc872eefd2371f97859e1d"
+  digest = "1:b9a37fe3dcc0f175e2862876da55dc7a378d1a70803d00d542e0ce4c21b5b9ff"
   name = "github.com/jaegertracing/jaeger"
   packages = [
     "model",
+    "pkg/cache",
+    "pkg/es",
     "pkg/multierror",
     "plugin/storage/es/spanstore/dbmodel",
     "plugin/storage/grpc",
@@ -160,6 +162,19 @@
   version = "v1.8.1"
 
 [[projects]]
+  digest = "1:891f9c13236eb1b6d1abd4fe01e6c9be51bcc65f04da0dfa4bfdf356374e98c4"
+  name = "github.com/mailru/easyjson"
+  packages = [
+    ".",
+    "buffer",
+    "jlexer",
+    "jwriter",
+  ]
+  pruneopts = "UT"
+  revision = "1b2b06f5f209fea48ff5922d8bfb2b9ed5d8f00b"
+  version = "v0.7.0"
+
+[[projects]]
   digest = "1:42eb1f52b84a06820cedc9baec2e710bfbda3ee6dac6cdb97f8b9a5066134ec6"
   name = "github.com/mitchellh/go-testing-interface"
   packages = ["."]
@@ -182,6 +197,18 @@
   pruneopts = "UT"
   revision = "4dadeb3030eda0273a12382bb2348ffc7c9d1a39"
   version = "v1.0.0"
+
+[[projects]]
+  digest = "1:4753e9dba3c4dea247a1b65b638d74561c2f3df47fbac74b704d2603bbb41974"
+  name = "github.com/olivere/elastic"
+  packages = [
+    ".",
+    "config",
+    "uritemplates",
+  ]
+  pruneopts = "UT"
+  revision = "dc1492fc8d9d981e6a2e927933aac5546e473452"
+  version = "v6.2.26"
 
 [[projects]]
   digest = "1:11e62d6050198055e6cd87ed57e5d8c669e84f839c16e16f192374d913d1a70d"
@@ -442,12 +469,18 @@
   input-imports = [
     "github.com/hashicorp/go-hclog",
     "github.com/jaegertracing/jaeger/model",
+    "github.com/jaegertracing/jaeger/pkg/cache",
+    "github.com/jaegertracing/jaeger/pkg/es",
     "github.com/jaegertracing/jaeger/plugin/storage/es/spanstore/dbmodel",
     "github.com/jaegertracing/jaeger/plugin/storage/grpc",
-    "github.com/jaegertracing/jaeger/plugin/storage/grpc/shared",
     "github.com/jaegertracing/jaeger/storage/dependencystore",
     "github.com/jaegertracing/jaeger/storage/spanstore",
     "github.com/logzio/logzio-go",
+    "github.com/olivere/elastic",
+    "github.com/opentracing/opentracing-go",
+    "github.com/opentracing/opentracing-go/log",
+    "github.com/pkg/errors",
+    "github.com/spf13/viper",
     "gopkg.in/yaml.v2",
   ]
   solver-name = "gps-cdcl"

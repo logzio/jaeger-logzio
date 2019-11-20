@@ -58,3 +58,20 @@ func TransformToLogzioSpanBytes(span *model.Span) ([]byte, error) {
 	}
 	return json.Marshal(logzioSpan)
 }
+
+func (span *logzioSpan) transformToDbModelSpan() *dbmodel.Span {
+	return &dbmodel.Span{
+		OperationName:	span.OperationName,
+		Process:		span.Process,
+		Tags:			span.Tags,
+		Tag:			span.Tag,
+		References:		span.References,
+		Logs:			span.Logs,
+		Duration:		span.Duration,
+		StartTimeMillis:span.StartTimeMillis,
+		StartTime:		span.StartTime,
+		Flags:			span.Flags,
+		SpanID:			span.SpanID,
+		TraceID:		span.TraceID,
+	}
+}
