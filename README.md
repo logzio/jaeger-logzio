@@ -25,7 +25,7 @@ logzio/jaeger-logzio:latest
 
 if you want to run the jaeger-logzio with the jaeger collector only, use the following command instead
 ```
-docker run -d -e ACCOUNTTOKEN=VhrAoIvDaHcqHRdChvrrALbbAJpJkYpx -e LISTENERURL=https://listener-eu.logz.io:8071 \
+docker run -d -e ACCOUNTTOKEN=<<ACCOUNT_TOKEN>> -e LISTENERURL=https://listener.logz.io:8071 \
   -p 6831:6831/udp \
   -p 6832:6832/udp \
   -p 5778:5778 \
