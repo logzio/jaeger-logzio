@@ -12,7 +12,7 @@ Run the command below 👇 with the following parameters:
 | LISTENERURL | **Default**: `https://listener.logz.io:8071` <br>  Listener URL and port. Replace `listener.logz.io` with your region's listener host. For more information on finding your account's region, see [Account region](https://docs.logz.io/user-guide/accounts/account-region.html). |
 
 ```
-docker run -d -e ACCOUNTTOKEN=<<ACCOUNT_TOKEN>> -e LISTENERURL=https://listener.logz.io:8071 -p 5775:5775/udp \                                                             yogevmets@ip-192-168-30-13
+docker run -d -e ACCOUNTTOKEN=<<ACCOUNT_TOKEN>> -e LISTENERURL=https://listener.logz.io:8071 -p 5775:5775/udp \
   -p 6831:6831/udp \
   -p 6832:6832/udp \
   -p 5778:5778 \
@@ -21,6 +21,19 @@ docker run -d -e ACCOUNTTOKEN=<<ACCOUNT_TOKEN>> -e LISTENERURL=https://listener.
   -p 9411:9411 jaeger-logzio
 logzio/jaeger-logzio:latest
 
+```
+
+if you want to run the jaeger-logzio with the jaeger collector only, use the following command instead
+```
+docker run -d -e ACCOUNTTOKEN=<<ACCOUNT_TOKEN>> -e LISTENERURL=https://listener.logz.io:8071 \
+  -p 6831:6831/udp \
+  -p 6832:6832/udp \
+  -p 5778:5778 \
+  -p 14268:14268 \
+  -p 9411:9411 \
+  -p 14267:14267 \
+  -p 14250:14250 \
+logzio/jaeger-logzio-collector:latest
 ```
 
 ## Run go binary with bash

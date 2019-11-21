@@ -65,7 +65,7 @@ func NewLogzioSpanWriter(config LogzioConfig, logger hclog.Logger) (*LogzioSpanW
 	return spanWriter, nil
 }
 
-// WriteSpan receives a Jaeger span, converts it to logzio span and send it to logzio
+// WriteSpan receives a Jaeger span, converts it to logzio span and sends it to logzio
 func (spanWriter *LogzioSpanWriter) WriteSpan(span *model.Span) error {
 	spanBytes, err := TransformToLogzioSpanBytes(span)
 	if err != nil {
@@ -76,10 +76,12 @@ func (spanWriter *LogzioSpanWriter) WriteSpan(span *model.Span) error {
 		return err
 	}
 	service := NewLogzioService(span)
-	serviceHash := service.hashCode()
+	serviceHash, err := service.hashCode()
 
-	if spanWriter.serviceCache.Get(serviceHash) == nil {
-		spanWriter.serviceCache.Put(serviceHash, serviceHash)
+	if spanWriter.serviceCache.Get(serviceHash) == nil || err != nil {
+		if err == nil {
+			spanWriter.serviceCache.Put(serviceHash, serviceHash)
+		}
 		serviceBytes, err := json.Marshal(service)
 		if err != nil {
 			return err
@@ -89,7 +91,7 @@ func (spanWriter *LogzioSpanWriter) WriteSpan(span *model.Span) error {
 	return err
 }
 
-// Close stops and drain logzio sender
+// Close stops and drains logzio sender
 func (spanWriter *LogzioSpanWriter) Close() {
 	spanWriter.sender.Stop()
 }

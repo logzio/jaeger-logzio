@@ -1,7 +1,11 @@
 package store
 
 import (
+	"fmt"
 	"io/ioutil"
+	"strings"
+
+	"github.com/spf13/viper"
 
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
@@ -9,6 +13,9 @@ import (
 
 const (
 	defaultListenerURL = "https://listener.logz.io:8071"
+	accountTokenParam  = "accountToken"
+	apiTokenParam      = "apiToken"
+	listenerURLParam   = "listenerURL"
 )
 
 // LogzioConfig struct for logzio span store
@@ -31,22 +38,32 @@ func (config *LogzioConfig) Validate() error {
 	return nil
 }
 
-//ParseConfig receives config file  path, parse it  and  return logzio span store config
+//ParseConfig receives a config file path, parse it and returns logzio span store config
 func ParseConfig(filePath string) (LogzioConfig, error) {
-	logzioConfig := LogzioConfig{}
-	yamlFile, err := ioutil.ReadFile(filePath)
-	if err != nil {
+	if filePath != "" {
+		logzioConfig := LogzioConfig{}
+		yamlFile, err := ioutil.ReadFile(filePath)
+		if err != nil {
+			return logzioConfig, err
+		}
+		err = yaml.Unmarshal(yamlFile, &logzioConfig)
 		return logzioConfig, err
 	}
-	err = yaml.Unmarshal(yamlFile, &logzioConfig)
-	return logzioConfig, err
+	v := viper.New()
+	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	v.SetDefault(listenerURLParam, defaultListenerURL)
+	v.SetDefault(apiTokenParam, "")
+	v.AutomaticEnv()
+
+	logzioConfig := LogzioConfig{
+		ListenerURL:  v.GetString(listenerURLParam),
+		AccountToken: v.GetString(accountTokenParam),
+		APIToken:     v.GetString(apiTokenParam),
+	}
+	return logzioConfig, nil
 }
 
 func (config *LogzioConfig) String() string {
-	desc := "account token: " + config.AccountToken +
-		"\n api token: " + config.APIToken
-	if config.ListenerURL != "" {
-		desc += "\n listener url: " + config.ListenerURL
-	}
+	desc := fmt.Sprintf("account token: %v \n api token: %v \n listener url: %v", config.AccountToken, config.APIToken, config.ListenerURL)
 	return desc
 }
