@@ -34,7 +34,7 @@ func getTagsValues(tags []model.KeyValue) []string {
 	return values
 }
 
-// TransformToLogzioSpanBytes receives Jaeger span, converts it logzio span and return it as byte array.
+// TransformToLogzioSpanBytes receives a Jaeger span, converts it to logzio span and returns it as a byte array.
 // The main differences between Jaeger span and logzio span are arrays which are represented as maps
 func TransformToLogzioSpanBytes(span *model.Span) ([]byte, error) {
 	spanConverter := dbmodel.NewFromDomain(true, getTagsValues(span.Tags), "@")

@@ -38,7 +38,7 @@ func (config *LogzioConfig) Validate() error {
 	return nil
 }
 
-//ParseConfig receives config file  path, parse it  and  return logzio span store config
+//ParseConfig receives a config file path, parse it and returns logzio span store config
 func ParseConfig(filePath string) (LogzioConfig, error) {
 	if filePath != "" {
 		logzioConfig := LogzioConfig{}
