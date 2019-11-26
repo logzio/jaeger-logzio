@@ -2,6 +2,7 @@ package store
 
 import (
 	"encoding/json"
+	"jaeger-logzio/store/objects"
 	"strings"
 	"time"
 
@@ -67,7 +68,7 @@ func NewLogzioSpanWriter(config LogzioConfig, logger hclog.Logger) (*LogzioSpanW
 
 // WriteSpan receives a Jaeger span, converts it to logzio span and sends it to logzio
 func (spanWriter *LogzioSpanWriter) WriteSpan(span *model.Span) error {
-	spanBytes, err := TransformToLogzioSpanBytes(span)
+	spanBytes, err := objects.TransformToLogzioSpanBytes(span)
 	if err != nil {
 		return err
 	}
@@ -75,8 +76,8 @@ func (spanWriter *LogzioSpanWriter) WriteSpan(span *model.Span) error {
 	if err != nil {
 		return err
 	}
-	service := NewLogzioService(span)
-	serviceHash, err := service.hashCode()
+	service := objects.NewLogzioService(span)
+	serviceHash, err := service.HashCode()
 
 	if spanWriter.serviceCache.Get(serviceHash) == nil || err != nil {
 		if err == nil {

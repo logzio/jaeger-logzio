@@ -1,10 +1,11 @@
-package store
+package objects
 
 import (
 	"encoding/json"
-	"github.com/jaegertracing/jaeger/model"
 	"io/ioutil"
 	"testing"
+
+	"github.com/jaegertracing/jaeger/model"
 )
 
 func TestTransformToLogzioSpanBytes(tester *testing.T) {

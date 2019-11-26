@@ -1,4 +1,4 @@
-package store
+package objects
 
 import (
 	"encoding/json"
@@ -9,7 +9,8 @@ import (
 
 const spanLogType = "jaegerSpan"
 
-type logzioSpan struct {
+// LogzioSpan is same as esSpan with a few different json field names and an addition on type field.
+type LogzioSpan struct {
 	TraceID         dbmodel.TraceID        `json:"traceID"`
 	OperationName   string                 `json:"operationName,omitempty"`
 	SpanID          dbmodel.SpanID         `json:"spanID"`
@@ -39,7 +40,7 @@ func getTagsValues(tags []model.KeyValue) []string {
 func TransformToLogzioSpanBytes(span *model.Span) ([]byte, error) {
 	spanConverter := dbmodel.NewFromDomain(true, getTagsValues(span.Tags), "@")
 	jsonSpan := spanConverter.FromDomainEmbedProcess(span)
-	logzioSpan := logzioSpan{
+	logzioSpan := LogzioSpan{
 		TraceID:         jsonSpan.TraceID,
 		OperationName:   jsonSpan.OperationName,
 		SpanID:          jsonSpan.SpanID,
@@ -57,19 +58,20 @@ func TransformToLogzioSpanBytes(span *model.Span) ([]byte, error) {
 	return json.Marshal(logzioSpan)
 }
 
-func (span *logzioSpan) transformToDbModelSpan() *dbmodel.Span {
+// TransformToDbModelSpan coverts logz.io span to ElasticSearch span
+func (span *LogzioSpan) TransformToDbModelSpan() *dbmodel.Span {
 	return &dbmodel.Span{
-		OperationName:	span.OperationName,
-		Process:		span.Process,
-		Tags:			span.Tags,
-		Tag:			span.Tag,
-		References:		span.References,
-		Logs:			span.Logs,
-		Duration:		span.Duration,
-		StartTimeMillis:span.StartTimeMillis,
-		StartTime:		span.StartTime,
-		Flags:			span.Flags,
-		SpanID:			span.SpanID,
-		TraceID:		span.TraceID,
+		OperationName:   span.OperationName,
+		Process:         span.Process,
+		Tags:            span.Tags,
+		Tag:             span.Tag,
+		References:      span.References,
+		Logs:            span.Logs,
+		Duration:        span.Duration,
+		StartTimeMillis: span.StartTimeMillis,
+		StartTime:       span.StartTime,
+		Flags:           span.Flags,
+		SpanID:          span.SpanID,
+		TraceID:         span.TraceID,
 	}
 }
