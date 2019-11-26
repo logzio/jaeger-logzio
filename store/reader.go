@@ -5,6 +5,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+	"strings"
+	"time"
+
 	"github.com/jaegertracing/jaeger/pkg/es"
 	"github.com/jaegertracing/jaeger/plugin/storage/es/spanstore/dbmodel"
 	"github.com/olivere/elastic"
@@ -12,10 +17,6 @@ import (
 	ottag "github.com/opentracing/opentracing-go/ext"
 	otlog "github.com/opentracing/opentracing-go/log"
 	"github.com/pkg/errors"
-	"io/ioutil"
-	"net/http"
-	"strings"
-	"time"
 
 	"github.com/hashicorp/go-hclog"
 	"github.com/jaegertracing/jaeger/model"
@@ -24,17 +25,17 @@ import (
 
 // LogzioSpanReader is a struct which holds logzio span reader properties
 type LogzioSpanReader struct {
-	apiToken		string
-	logger			hclog.Logger
-	sourceFn		sourceFn
-	client 			es.Client
-	spanConverter	dbmodel.ToDomain
+	apiToken      string
+	logger        hclog.Logger
+	sourceFn      sourceFn
+	client        es.Client
+	spanConverter dbmodel.ToDomain
 }
 
 type logzioSearchRequest struct {
-	query	map[string]interface{}
-	size	int
-	sort	[]map[string]interface{}
+	query map[string]interface{}
+	size  int
+	sort  []map[string]interface{}
 }
 
 // NewLogzioSpanReader creates a new logzio span reader
@@ -53,9 +54,9 @@ func getSourceFn() sourceFn {
 		searchSource := elastic.NewSearchSource().
 			Query(query).
 			Size(10000)
-			//TerminateAfter(10000)
-			searchSource.Sort("startTime", true)
-			//SearchAfter(nextTime)
+		//TerminateAfter(10000)
+		searchSource.Sort("startTime", true)
+		//SearchAfter(nextTime)
 		return searchSource
 	}
 }
@@ -157,9 +158,9 @@ func (reader *LogzioSpanReader) multiRead(ctx context.Context, traceIDs []model.
 		for i, traceID := range traceIDs {
 			reader.logger.Error(traceID.String())
 
-			traceIdTerm := elastic.NewTermQuery("traceID", traceID.String())
+			traceIDTerm := elastic.NewTermQuery("traceID", traceID.String())
 			rangeQuery := elastic.NewRangeQuery("startTime").Gte(model.TimeAsEpochMicroseconds(startTime)).Lte(model.TimeAsEpochMicroseconds(endTime))
-			query := elastic.NewBoolQuery().Filter(traceIdTerm, rangeQuery)
+			query := elastic.NewBoolQuery().Filter(traceIDTerm, rangeQuery)
 			if val, ok := searchAfterTime[traceID]; ok {
 				nextTime = val
 			}
@@ -181,7 +182,7 @@ func (reader *LogzioSpanReader) multiRead(ctx context.Context, traceIDs []model.
 		reqReader, _ := searchRequests[0].Body()
 		strBody := fmt.Sprintf("{}\n%s\n", reqReader)
 
-		req, _ := http.NewRequest("POST","https://api-eu.logz.io/v1/elasticsearch/_msearch",strings.NewReader(strBody))
+		req, _ := http.NewRequest("POST", "https://api-eu.logz.io/v1/elasticsearch/_msearch", strings.NewReader(strBody))
 		req.Header.Add("X-API-TOKEN", reader.apiToken)
 		resp, _ := client.Do(req)
 		defer resp.Body.Close()
@@ -203,7 +204,6 @@ func (reader *LogzioSpanReader) multiRead(ctx context.Context, traceIDs []model.
 		var results elastic.MultiSearchResult
 		json.Unmarshal(body, &results)
 		for _, result := range results.Responses {
-
 
 			if result.Hits == nil || len(result.Hits.Hits) == 0 {
 				continue
