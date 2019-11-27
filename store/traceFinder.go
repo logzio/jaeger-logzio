@@ -1,7 +1,11 @@
 package store
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
+	"github.com/jaegertracing/jaeger/storage/spanstore"
+	"github.com/opentracing/opentracing-go"
 	"time"
 
 	"github.com/hashicorp/go-hclog"
@@ -11,17 +15,21 @@ import (
 	"github.com/pkg/errors"
 )
 
+
+
 // TraceFinder object builds search request from traceIDs and parse the result to traces
 type TraceFinder struct {
 	logger        hclog.Logger
 	sourceFn      sourceFn
 	spanConverter dbmodel.ToDomain
+	apiToken	  string
 }
 
 
 // NewTraceFinder creates trace finder object
-func NewTraceFinder(logger hclog.Logger) TraceFinder {
+func NewTraceFinder(apiToken string, logger hclog.Logger) TraceFinder {
 	return TraceFinder{
+		apiToken: apiToken,
 		logger:   logger,
 		sourceFn: getSourceFn(),
 	}
@@ -53,7 +61,7 @@ func (finder *TraceFinder) traceIDsMultiSearchRequestBody(traceIDs []model.Trace
 	return multiSearchBody
 }
 
-func (finder *TraceFinder) getTracesMap(apiToken string, traceIDs []model.TraceID, startTime time.Time, endTime time.Time) map[model.TraceID]*model.Trace {
+func (finder *TraceFinder) getTracesMap(traceIDs []model.TraceID, startTime time.Time, endTime time.Time) map[model.TraceID]*model.Trace {
 	nextTime := model.TimeAsEpochMicroseconds(startTime)
 	searchAfterTime := make(map[model.TraceID]uint64)
 	totalDocumentsFetched := make(map[model.TraceID]int)
@@ -68,16 +76,22 @@ func (finder *TraceFinder) getTracesMap(apiToken string, traceIDs []model.TraceI
 		traceIDs = nil
 
 		finder.logger.Error(multiSearchBody)
-		resp, err := getHTTPResponse(multiSearchBody, apiToken, finder.logger)
+		resp, err := getHTTPResponseBytes(multiSearchBody, finder.apiToken, finder.logger)
 		if err != nil {
 			break
 		}
-		results, err := parseMultiSearchResponse(resp, finder.logger)
-		if err != nil {
+		finder.logger.Error("OK SO FAR!!!!!!!!!!!!!")
+		resultsBytes, err := parseHTTPResponse(resp, finder.logger)
+		var results elastic.MultiSearchResult
+		if err = json.Unmarshal(resultsBytes, &results); err != nil {
+			finder.logger.Error("can't convert response to MultiSearchResult object")
 			break
 		}
-		for _, result := range results.Responses {
+		if results.Responses == nil || len(results.Responses) == 0 {
+			break
+		}
 
+		for _, result := range results.Responses {
 			if result.Hits == nil || len(result.Hits.Hits) == 0 {
 				continue
 			}
@@ -121,3 +135,107 @@ func (finder *TraceFinder) collectSpans(esSpansRaw []*elastic.SearchHit) ([]*mod
 	}
 	return spans, nil
 }
+
+func (finder *TraceFinder) multiRead(ctx context.Context, traceIDs []model.TraceID, startTime, endTime time.Time) ([]*model.Trace, error) {
+	if len(traceIDs) == 0 {
+		return []*model.Trace{}, nil
+	}
+	tracesMap := finder.getTracesMap(traceIDs, startTime, endTime)
+
+	var traces []*model.Trace
+	for _, trace := range tracesMap {
+		traces = append(traces, trace)
+	}
+	return traces, nil
+}
+
+func (finder *TraceFinder) findTraceIDsStrings(ctx context.Context, traceQuery *spanstore.TraceQueryParameters) ([]string, error) {
+	childSpan, _ := opentracing.StartSpanFromContext(ctx, "findTraceIDsStrings")
+	defer childSpan.Finish()
+
+	aggregation := buildTraceIDAggregation(traceQuery.NumTraces)
+	boolQuery := finder.buildFindTraceIDsQuery(traceQuery)
+
+
+	//todo: add time range
+	searchService := elastic.NewSearchRequest().
+		Size(0). // set to 0 because we don't want actual documents.
+		Aggregation(traceIDAggregation, aggregation).
+		IgnoreUnavailable(true).
+		Query(boolQuery)
+
+	requestBody, err := searchService.Body()
+	if err != nil {
+			finder.logger.Warn("can't create search request for trace query")
+		return nil, err
+	}
+	requestBody = fmt.Sprintf("{}\n%s\n", requestBody)
+	finder.logger.Error(string(requestBody))
+	response, err := getHTTPResponseBytes(requestBody,finder.apiToken ,finder.logger)
+	if err != nil {
+		return nil, errors.Wrap(err, "Search service failed")
+	}
+
+	resultsBytes, err := parseHTTPResponse(response, finder.logger)
+	var multiSearchResult elastic.MultiSearchResult
+	if err = json.Unmarshal(resultsBytes, &multiSearchResult); err != nil {
+		finder.logger.Error("can't convert response to SearchResult object")
+		return nil, err
+	}
+	searchResult := multiSearchResult.Responses[0]
+	bucket, found := searchResult.Aggregations.Terms(traceIDAggregation)
+	if !found {
+		return nil, ErrUnableToFindTraceIDAggregation
+	}
+
+	traceIDBuckets := bucket.Buckets
+	return bucketToStringArray(traceIDBuckets)
+}
+
+func (finder *TraceFinder) buildTagQuery(k string, v string) elastic.Query {
+	objectTagListLen := len(objectTagFieldList)
+	queries := make([]elastic.Query, len(nestedTagFieldList)+objectTagListLen)
+	kd := finder.spanConverter.ReplaceDot(k)
+	for i := range objectTagFieldList {
+		queries[i] = buildObjectQuery(objectTagFieldList[i], kd, v)
+	}
+	for i := range nestedTagFieldList {
+		queries[i+objectTagListLen] = buildNestedQuery(nestedTagFieldList[i], k, v)
+	}
+
+	// but configuration can change over time
+	return elastic.NewBoolQuery().Should(queries...)
+}
+
+func (finder *TraceFinder) buildFindTraceIDsQuery(traceQuery *spanstore.TraceQueryParameters) elastic.Query {
+	boolQuery := elastic.NewBoolQuery()
+
+	//add duration query
+	if traceQuery.DurationMax != 0 || traceQuery.DurationMin != 0 {
+		durationQuery := buildDurationQuery(traceQuery.DurationMin, traceQuery.DurationMax)
+		boolQuery.Must(durationQuery)
+	}
+
+	//add startTime query
+	startTimeQuery := buildStartTimeQuery(traceQuery.StartTimeMin, traceQuery.StartTimeMax)
+	boolQuery.Must(startTimeQuery)
+
+	//add process.serviceName query
+	if traceQuery.ServiceName != "" {
+		serviceNameQuery := buildServiceNameQuery(traceQuery.ServiceName)
+		boolQuery.Must(serviceNameQuery)
+	}
+
+	//add operationName query
+	if traceQuery.OperationName != "" {
+		operationNameQuery := buildOperationNameQuery(traceQuery.OperationName)
+		boolQuery.Must(operationNameQuery)
+	}
+
+	for k, v := range traceQuery.Tags {
+		tagQuery := finder.buildTagQuery(k, v)
+		boolQuery.Must(tagQuery)
+	}
+	return boolQuery
+}
+

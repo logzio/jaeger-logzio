@@ -8,6 +8,7 @@ import (
 	"github.com/olivere/elastic"
 	"github.com/pkg/errors"
 	"jaeger-logzio/store/objects"
+	"time"
 )
 
 func convertTraceIDsStringsToModels(traceIDs []string) ([]model.TraceID, error) {
@@ -36,3 +37,65 @@ func unmarshalJSONSpan(esSpanRaw *elastic.SearchHit) (*objects.LogzioSpan, error
 	return &jsonSpan, nil
 }
 
+func buildTraceIDAggregation(numOfTraces int) elastic.Aggregation {
+	return elastic.NewTermsAggregation().
+		Size(numOfTraces).
+		Field(traceIDField).
+		Order(startTimeField, false).
+		SubAggregation(startTimeField, buildTraceIDSubAggregation())
+}
+
+func buildTraceIDSubAggregation() elastic.Aggregation {
+	return elastic.NewMaxAggregation().
+		Field(startTimeField)
+}
+
+func buildDurationQuery(durationMin time.Duration, durationMax time.Duration) elastic.Query {
+	minDurationMicros := model.DurationAsMicroseconds(durationMin)
+	maxDurationMicros := defaultMaxDuration
+	if durationMax != 0 {
+		maxDurationMicros = model.DurationAsMicroseconds(durationMax)
+	}
+	return elastic.NewRangeQuery(durationField).Gte(minDurationMicros).Lte(maxDurationMicros)
+}
+
+func buildStartTimeQuery(startTimeMin time.Time, startTimeMax time.Time) elastic.Query {
+	minStartTimeMicros := model.TimeAsEpochMicroseconds(startTimeMin)
+	maxStartTimeMicros := model.TimeAsEpochMicroseconds(startTimeMax)
+	return elastic.NewRangeQuery(startTimeField).Gte(minStartTimeMicros).Lte(maxStartTimeMicros)
+}
+
+func buildServiceNameQuery(serviceName string) elastic.Query {
+	return elastic.NewMatchQuery(serviceNameField, serviceName)
+}
+
+func buildOperationNameQuery(operationName string) elastic.Query {
+	return elastic.NewMatchQuery(operationNameField, operationName)
+}
+
+func buildNestedQuery(field string, k string, v string) elastic.Query {
+	keyField := fmt.Sprintf("%s.%s", field, tagKeyField)
+	valueField := fmt.Sprintf("%s.%s", field, tagValueField)
+	keyQuery := elastic.NewMatchQuery(keyField, k)
+	valueQuery := elastic.NewMatchQuery(valueField, v)
+	tagBoolQuery := elastic.NewBoolQuery().Must(keyQuery, valueQuery)
+	return elastic.NewNestedQuery(field, tagBoolQuery)
+}
+
+func buildObjectQuery(field string, k string, v string) elastic.Query {
+	keyField := fmt.Sprintf("%s.%s", field, k)
+	keyQuery := elastic.NewMatchQuery(keyField, v)
+	return elastic.NewBoolQuery().Must(keyQuery)
+}
+
+func bucketToStringArray(buckets []*elastic.AggregationBucketKeyItem) ([]string, error) {
+	strings := make([]string, len(buckets))
+	for i, keyitem := range buckets {
+		str, ok := keyitem.Key.(string)
+		if !ok {
+			return nil, errors.New("Non-string key found in aggregation")
+		}
+		strings[i] = str
+	}
+	return strings, nil
+}

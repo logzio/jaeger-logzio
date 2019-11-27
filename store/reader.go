@@ -2,7 +2,6 @@ package store
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -11,6 +10,7 @@ import (
 
 	"github.com/olivere/elastic"
 	"github.com/opentracing/opentracing-go"
+
 	//ottag "github.com/opentracing/opentracing-go/ext"
 	//otlog "github.com/opentracing/opentracing-go/log"
 	"github.com/pkg/errors"
@@ -19,19 +19,31 @@ import (
 	"github.com/jaegertracing/jaeger/model"
 	"github.com/jaegertracing/jaeger/storage/spanstore"
 )
-
 const (
-	traceIDField 			= "traceID"
-	startTimeField 			= "startTime"
-	httpPost 				= "POST"
-	apiTokenHeader 			= "X-API-TOKEN"
+	spanIndex               = "jaeger-span-"
+	serviceIndex            = "jaeger-service-"
+	archiveIndexSuffix      = "archive"
+	archiveReadIndexSuffix  = archiveIndexSuffix + "-read"
+	archiveWriteIndexSuffix = archiveIndexSuffix + "-write"
+	traceIDAggregation      = "traceIDs"
+	indexPrefixSeparator    = "-"
 
+	traceIDField           = "traceID"
+	durationField          = "duration"
+	startTimeField         = "startTime"
+	httpPost       = "POST"
+	apiTokenHeader = "X-API-TOKEN"
+	serviceNameField       = "process.serviceName"
+	operationNameField     = "operationName"
 	objectTagsField        = "tag"
 	objectProcessTagsField = "process.tag"
 	nestedTagsField        = "tags"
 	nestedProcessTagsField = "process.tags"
 	nestedLogFieldsField   = "logs.fields"
+	tagKeyField            = "key"
+	tagValueField          = "value"
 
+	defaultDocCount  = 10000 // the default elasticsearch allowed limit
 	defaultNumTraces = 100
 )
 
@@ -63,20 +75,20 @@ var (
 
 // LogzioSpanReader is a struct which holds logzio span reader properties
 type LogzioSpanReader struct {
-	apiToken      string
-	logger        hclog.Logger
-	sourceFn      sourceFn
-	client        *http.Client
-	traceFinder	  traceFinder
+	apiToken    string
+	logger      hclog.Logger
+	sourceFn    sourceFn
+	client      *http.Client
+	traceFinder TraceFinder
 }
 
 // NewLogzioSpanReader creates a new logzio span reader
 func NewLogzioSpanReader(config LogzioConfig, logger hclog.Logger) *LogzioSpanReader {
 	return &LogzioSpanReader{
-		logger:   logger,
-		apiToken: config.APIToken,
-		sourceFn: getSourceFn(),
-		traceFinder:	NewTraceFinder(logger),
+		logger:      logger,
+		apiToken:    config.APIToken,
+		sourceFn:    getSourceFn(),
+		traceFinder: NewTraceFinder(config.APIToken, logger),
 	}
 }
 
@@ -99,7 +111,7 @@ func (reader *LogzioSpanReader) GetTrace(ctx context.Context, traceID model.Trac
 	span, ctx := opentracing.StartSpanFromContext(ctx, "GetTrace")
 	defer span.Finish()
 	currentTime := time.Now()
-	traces, err := reader.multiRead(ctx, []model.TraceID{traceID}, currentTime.Add(-time.Hour*240), currentTime)
+	traces, err := reader.traceFinder.multiRead(ctx, []model.TraceID{traceID}, currentTime.Add(-time.Hour*240), currentTime)
 	if err != nil {
 		return nil, err
 	}
@@ -110,22 +122,33 @@ func (reader *LogzioSpanReader) GetTrace(ctx context.Context, traceID model.Trac
 }
 
 // GetServices returns an array of all the service named that are being monitored
-func (*LogzioSpanReader) GetServices(ctx context.Context) ([]string, error) {
-	return nil, nil
+func (reader *LogzioSpanReader) GetServices(ctx context.Context) ([]string, error) {
+	return []string{"frontend"}, nil
 }
 
 // GetOperations returns an array of all the operation a specific service performed
-func (*LogzioSpanReader) GetOperations(ctx context.Context, service string) ([]string, error) {
+func (reader *LogzioSpanReader) GetOperations(ctx context.Context, service string) ([]string, error) {
+	reader.logger.Error("GGGGGGGGet operations called")
+
 	return nil, nil
 }
 
 // FindTraces return an array of Jaeger traces by a search query
-func (*LogzioSpanReader) FindTraces(ctx context.Context, query *spanstore.TraceQueryParameters) ([]*model.Trace, error) {
-	return nil, nil
+func (reader *LogzioSpanReader) FindTraces(ctx context.Context, query *spanstore.TraceQueryParameters) ([]*model.Trace, error) {
+	reader.logger.Error("FFFFFFFFFFFFFFFFFFFindTraces called")
+	span, ctx := opentracing.StartSpanFromContext(ctx, "FindTraces")
+	defer span.Finish()
+
+	uniqueTraceIDs, err := reader.FindTraceIDs(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	return reader.traceFinder.multiRead(ctx, uniqueTraceIDs, query.StartTimeMin, query.StartTimeMax)
 }
 
 // FindTraceIDs returns an array of traceIds by a search query
 func (reader *LogzioSpanReader) FindTraceIDs(ctx context.Context, query *spanstore.TraceQueryParameters) ([]model.TraceID, error) {
+	reader.logger.Error("FFFFFFFFFFFFFFFFFFFindTraceIds called")
 	span, ctx := opentracing.StartSpanFromContext(ctx, "FindTraceIDs")
 	defer span.Finish()
 
@@ -135,10 +158,11 @@ func (reader *LogzioSpanReader) FindTraceIDs(ctx context.Context, query *spansto
 	if query.NumTraces == 0 {
 		query.NumTraces = defaultNumTraces
 	}
-	esTraceIDs, err := reader.findTraceIDsStrings(ctx, query)
+	esTraceIDs, err := reader.traceFinder.findTraceIDsStrings(ctx, query)
 	if err != nil {
 		return nil, err
 	}
+	reader.logger.Error(fmt.Sprint(esTraceIDs))
 	return convertTraceIDsStringsToModels(esTraceIDs)
 }
 
@@ -161,72 +185,21 @@ func validateQuery(p *spanstore.TraceQueryParameters) error {
 	return nil
 }
 
-func (reader *LogzioSpanReader) findTraceIDsStrings(ctx context.Context, traceQuery *spanstore.TraceQueryParameters) ([]string, error) {
-	childSpan, _ := opentracing.StartSpanFromContext(ctx, "findTraceIDsStrings")
-	defer childSpan.Finish()
-
-	//aggregation := reader.buildTraceIDAggregation(traceQuery.NumTraces)
-	//boolQuery := reader.buildFindTraceIDsQuery(traceQuery)
-	//jaegerIndices := reader.timeRangeIndices(reader.spanIndexPrefix, traceQuery.StartTimeMin, traceQuery.StartTimeMax)
-	//
-	//searchService := reader.client.Search(jaegerIndices...).
-	//	Size(0). // set to 0 because we don't want actual documents.
-	//	Aggregation(traceIDAggregation, aggregation).
-	//	IgnoreUnavailable(true).
-	//	Query(boolQuery)
-	//
-	//searchResult, err := searchService.Do(ctx)
-	//if err != nil {
-	//	return nil, errors.Wrap(err, "Search service failed")
-	//}
-	//if searchResult.Aggregations == nil {
-	//	return []string{}, nil
-	//}
-	//bucket, found := searchResult.Aggregations.Terms(traceIDAggregation)
-	//if !found {
-	//	return nil, ErrUnableToFindTraceIDAggregation
-	//}
-	//
-	//traceIDBuckets := bucket.Buckets
-	//return bucketToStringArray(traceIDBuckets)
-	return nil, nil
-}
-
-func (reader *LogzioSpanReader) multiRead(ctx context.Context, traceIDs []model.TraceID, startTime, endTime time.Time) ([]*model.Trace, error) {
-	if len(traceIDs) == 0 {
-		return []*model.Trace{}, nil
-	}
-	tracesMap := reader.traceFinder.getTracesMap(reader.apiToken, traceIDs,startTime, endTime)
-
-	var traces []*model.Trace
-	for _, trace := range tracesMap {
-		traces = append(traces, trace)
-	}
-	return traces, nil
-}
-
-func parseMultiSearchResponse(resp *http.Response, logger hclog.Logger) (elastic.MultiSearchResult, error) {
+func parseHTTPResponse(resp *http.Response, logger hclog.Logger) ([]byte, error) {
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		logger.Error("can't read response body")
-		return elastic.MultiSearchResult{}, err
+		return nil, err
 	}
+	logger.Error(string(body))
 	if err := resp.Body.Close(); err != nil {
 		logger.Warn("can't close response body, possible memory leak")
 	}
 	logger.Debug(fmt.Sprintf("got response from logz.io: %s", string(body)))
-	var results elastic.MultiSearchResult
-	if err = json.Unmarshal(body, &results); err != nil {
-		logger.Error("can't convert response to MultiSearchResult object")
-		return elastic.MultiSearchResult{}, err
-	}
-	if results.Responses == nil || len(results.Responses) == 0 {
-		return elastic.MultiSearchResult{}, err
-	}
-	return results, err
+	return body, err
 }
 
-func getHttpResponse(requestBody string, apiToken string, logger hclog.Logger) (*http.Response, error) {
+func getHTTPResponseBytes(requestBody string, apiToken string, logger hclog.Logger) (*http.Response, error) {
 	client := http.Client{}
 	req, err := http.NewRequest(httpPost, "https://api-eu.logz.io/v1/elasticsearch/_msearch", strings.NewReader(requestBody))
 	if err != nil {
@@ -236,7 +209,7 @@ func getHttpResponse(requestBody string, apiToken string, logger hclog.Logger) (
 	req.Header.Add(apiTokenHeader, apiToken)
 	resp, err := client.Do(req)
 	if err != nil {
-		logger.Error("failed to execute multiSearch request")
+		logger.Error("failed to execute multiSearch request" + err.Error())
 		return nil, err
 	}
 	return resp, err
@@ -246,4 +219,3 @@ func getHttpResponse(requestBody string, apiToken string, logger hclog.Logger) (
 func (*LogzioSpanReader) GetDependencies(endTs time.Time, lookback time.Duration) ([]model.DependencyLink, error) {
 	return nil, nil
 }
-
