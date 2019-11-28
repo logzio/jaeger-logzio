@@ -4,9 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
+
 	"github.com/jaegertracing/jaeger/storage/spanstore"
 	"github.com/opentracing/opentracing-go"
-	"time"
 
 	"github.com/hashicorp/go-hclog"
 	"github.com/jaegertracing/jaeger/model"
@@ -15,16 +16,13 @@ import (
 	"github.com/pkg/errors"
 )
 
-
-
 // TraceFinder object builds search request from traceIDs and parse the result to traces
 type TraceFinder struct {
 	logger        hclog.Logger
 	sourceFn      sourceFn
 	spanConverter dbmodel.ToDomain
-	apiToken	  string
+	apiToken      string
 }
-
 
 // NewTraceFinder creates trace finder object
 func NewTraceFinder(apiToken string, logger hclog.Logger) TraceFinder {
@@ -164,12 +162,12 @@ func (finder *TraceFinder) findTraceIDsStrings(ctx context.Context, traceQuery *
 
 	requestBody, err := searchService.Body()
 	if err != nil {
-			finder.logger.Warn("can't create search request for trace query")
+		finder.logger.Warn("can't create search request for trace query")
 		return nil, err
 	}
 	requestBody = fmt.Sprintf("{}\n%s\n", requestBody)
 	finder.logger.Error(string(requestBody))
-	response, err := getHTTPResponseBytes(requestBody,finder.apiToken ,finder.logger)
+	response, err := getHTTPResponseBytes(requestBody, finder.apiToken, finder.logger)
 	if err != nil {
 		return nil, errors.Wrap(err, "Search service failed")
 	}
@@ -236,4 +234,3 @@ func (finder *TraceFinder) buildFindTraceIDsQuery(traceQuery *spanstore.TraceQue
 	}
 	return boolQuery
 }
-

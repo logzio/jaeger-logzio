@@ -4,11 +4,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"jaeger-logzio/store/objects"
+	"time"
+
 	"github.com/jaegertracing/jaeger/model"
 	"github.com/olivere/elastic"
 	"github.com/pkg/errors"
-	"jaeger-logzio/store/objects"
-	"time"
 )
 
 func convertTraceIDsStringsToModels(traceIDs []string) ([]model.TraceID, error) {

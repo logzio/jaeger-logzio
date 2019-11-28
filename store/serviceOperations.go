@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+
 	"github.com/hashicorp/go-hclog"
 	"github.com/jaegertracing/jaeger/pkg/cache"
 	"github.com/olivere/elastic"
@@ -11,11 +12,9 @@ import (
 )
 
 const (
-	serviceName = "serviceName"
-	operationsAggregation = "distinct_operations"
-	servicesAggregation   = "distinct_services"
-	logzioMaxAggregationSize = 1000
-
+	serviceName              = "serviceName"
+	operationsAggregation    = "distinct_operations"
+	servicesAggregation      = "distinct_services"
 )
 
 // ServiceOperationStorage stores service to operation pairs.
@@ -23,18 +22,17 @@ type ServiceOperationStorage struct {
 	client       elastic.Client
 	logger       hclog.Logger
 	serviceCache cache.Cache
-	apiToken	 string
+	apiToken     string
 }
 
 // NewServiceOperationStorage returns a new ServiceOperationStorage.
-func NewServiceOperationStorage(logger hclog.Logger,	apiToken string,) *ServiceOperationStorage {
+func NewServiceOperationStorage(logger hclog.Logger, apiToken string) *ServiceOperationStorage {
 	return &ServiceOperationStorage{
-		client: elastic.Client{},
-		logger: logger,
+		client:   elastic.Client{},
+		logger:   logger,
 		apiToken: apiToken,
 	}
 }
-
 
 func (soStorage *ServiceOperationStorage) getServices(context context.Context) ([]string, error) {
 	serviceAggregation := getServicesAggregation()
@@ -58,14 +56,14 @@ func (soStorage *ServiceOperationStorage) getServices(context context.Context) (
 		return nil, err
 	}
 
-    responseBytes, err := parseHTTPResponse(httpResponse, soStorage.logger)
+	responseBytes, err := parseHTTPResponse(httpResponse, soStorage.logger)
 	if err != nil {
 		return nil, err
 	}
 
 	soStorage.logger.Error(string(responseBytes))
 
-    var multiSearchResult elastic.MultiSearchResult
+	var multiSearchResult elastic.MultiSearchResult
 	if err := json.Unmarshal(responseBytes, &multiSearchResult); err != nil {
 		return nil, errors.Wrap(err, "failed to parse http response")
 	}

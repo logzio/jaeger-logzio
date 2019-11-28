@@ -19,20 +19,15 @@ import (
 	"github.com/jaegertracing/jaeger/model"
 	"github.com/jaegertracing/jaeger/storage/spanstore"
 )
+
 const (
-	spanIndex               = "jaeger-span-"
-	serviceIndex            = "jaeger-service-"
-	archiveIndexSuffix      = "archive"
-	archiveReadIndexSuffix  = archiveIndexSuffix + "-read"
-	archiveWriteIndexSuffix = archiveIndexSuffix + "-write"
 	traceIDAggregation      = "traceIDs"
-	indexPrefixSeparator    = "-"
 
 	traceIDField           = "traceID"
 	durationField          = "duration"
 	startTimeField         = "startTime"
-	httpPost       = "POST"
-	apiTokenHeader = "X-API-TOKEN"
+	httpPost               = "POST"
+	apiTokenHeader         = "X-API-TOKEN"
 	serviceNameField       = "process.serviceName"
 	operationNameField     = "operationName"
 	objectTagsField        = "tag"
@@ -44,6 +39,7 @@ const (
 	tagValueField          = "value"
 
 	defaultDocCount  = 10000 // the default elasticsearch allowed limit
+	logzioMaxAggregationSize = 1000
 	defaultNumTraces = 100
 )
 
@@ -75,21 +71,21 @@ var (
 
 // LogzioSpanReader is a struct which holds logzio span reader properties
 type LogzioSpanReader struct {
-	apiToken    			string
-	logger      			hclog.Logger
-	sourceFn    			sourceFn
-	client      			*http.Client
-	traceFinder 			TraceFinder
+	apiToken                string
+	logger                  hclog.Logger
+	sourceFn                sourceFn
+	client                  *http.Client
+	traceFinder             TraceFinder
 	serviceOperationStorage *ServiceOperationStorage
 }
 
 // NewLogzioSpanReader creates a new logzio span reader
 func NewLogzioSpanReader(config LogzioConfig, logger hclog.Logger) *LogzioSpanReader {
 	return &LogzioSpanReader{
-		logger:      logger,
-		apiToken:    config.APIToken,
-		sourceFn:    getSourceFn(),
-		traceFinder: NewTraceFinder(config.APIToken, logger),
+		logger:                  logger,
+		apiToken:                config.APIToken,
+		sourceFn:                getSourceFn(),
+		traceFinder:             NewTraceFinder(config.APIToken, logger),
 		serviceOperationStorage: NewServiceOperationStorage(logger, config.APIToken),
 	}
 }
@@ -128,7 +124,6 @@ func (reader *LogzioSpanReader) GetServices(ctx context.Context) ([]string, erro
 	span, ctx := opentracing.StartSpanFromContext(ctx, "GetServices")
 	defer span.Finish()
 	return reader.serviceOperationStorage.getServices(ctx)
-	//return []string{"frontend"}, nil
 }
 
 // GetOperations returns an array of all the operation a specific service performed
