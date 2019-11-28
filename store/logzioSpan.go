@@ -52,6 +52,7 @@ func TransformToLogzioSpanBytes(span *model.Span) ([]byte, error) {
 		Tags:            jsonSpan.Tags,
 		Tag:             jsonSpan.Tag,
 		Process:         jsonSpan.Process,
+		Logs:			 jsonSpan.Logs,
 		Type:            spanLogType,
 	}
 	return json.Marshal(logzioSpan)
