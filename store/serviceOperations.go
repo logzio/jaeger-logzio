@@ -12,9 +12,9 @@ import (
 )
 
 const (
-	serviceName              = "serviceName"
-	operationsAggregation    = "distinct_operations"
-	servicesAggregation      = "distinct_services"
+	serviceName           = "serviceName"
+	operationsAggregation = "distinct_operations"
+	servicesAggregation   = "distinct_services"
 )
 
 // ServiceOperationStorage stores service to operation pairs.
@@ -51,18 +51,12 @@ func (soStorage *ServiceOperationStorage) getServices(context context.Context) (
 	}
 	searchBody = fmt.Sprintf("{}\n%s\n", searchBody)
 	soStorage.logger.Error(searchBody)
-	httpResponse, err := getHTTPResponseBytes(searchBody, soStorage.apiToken, soStorage.logger)
-	if err != nil {
-		return nil, err
-	}
-
-	responseBytes, err := parseHTTPResponse(httpResponse, soStorage.logger)
+	responseBytes, err := getHTTPResponseBytes(searchBody, soStorage.apiToken, soStorage.logger)
 	if err != nil {
 		return nil, err
 	}
 
 	soStorage.logger.Error(string(responseBytes))
-
 	var multiSearchResult elastic.MultiSearchResult
 	if err := json.Unmarshal(responseBytes, &multiSearchResult); err != nil {
 		return nil, errors.Wrap(err, "failed to parse http response")

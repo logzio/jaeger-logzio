@@ -21,7 +21,7 @@ import (
 )
 
 const (
-	traceIDAggregation      = "traceIDs"
+	traceIDAggregation = "traceIDs"
 
 	traceIDField           = "traceID"
 	durationField          = "duration"
@@ -38,9 +38,9 @@ const (
 	tagKeyField            = "key"
 	tagValueField          = "value"
 
-	defaultDocCount  = 10000 // the default elasticsearch allowed limit
+	defaultDocCount          = 10000 // the default elasticsearch allowed limit
 	logzioMaxAggregationSize = 1000
-	defaultNumTraces = 100
+	defaultNumTraces         = 100
 )
 
 var (
@@ -135,7 +135,6 @@ func (reader *LogzioSpanReader) GetOperations(ctx context.Context, service strin
 
 // FindTraces return an array of Jaeger traces by a search query
 func (reader *LogzioSpanReader) FindTraces(ctx context.Context, query *spanstore.TraceQueryParameters) ([]*model.Trace, error) {
-	reader.logger.Error("FFFFFFFFFFFFFFFFFFFindTraces called")
 	span, ctx := opentracing.StartSpanFromContext(ctx, "FindTraces")
 	defer span.Finish()
 
@@ -148,7 +147,6 @@ func (reader *LogzioSpanReader) FindTraces(ctx context.Context, query *spanstore
 
 // FindTraceIDs returns an array of traceIds by a search query
 func (reader *LogzioSpanReader) FindTraceIDs(ctx context.Context, query *spanstore.TraceQueryParameters) ([]model.TraceID, error) {
-	reader.logger.Error("FFFFFFFFFFFFFFFFFFFindTraceIds called")
 	span, ctx := opentracing.StartSpanFromContext(ctx, "FindTraceIDs")
 	defer span.Finish()
 
@@ -185,21 +183,7 @@ func validateQuery(p *spanstore.TraceQueryParameters) error {
 	return nil
 }
 
-func parseHTTPResponse(resp *http.Response, logger hclog.Logger) ([]byte, error) {
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		logger.Error("can't read response body")
-		return nil, err
-	}
-	logger.Error(string(body))
-	if err := resp.Body.Close(); err != nil {
-		logger.Warn("can't close response body, possible memory leak")
-	}
-	logger.Debug(fmt.Sprintf("got response from logz.io: %s", string(body)))
-	return body, err
-}
-
-func getHTTPResponseBytes(requestBody string, apiToken string, logger hclog.Logger) (*http.Response, error) {
+func getHTTPResponseBytes(requestBody string, apiToken string, logger hclog.Logger) ([]byte, error) {
 	client := http.Client{}
 	req, err := http.NewRequest(httpPost, "https://api-eu.logz.io/v1/elasticsearch/_msearch", strings.NewReader(requestBody))
 	if err != nil {
@@ -212,7 +196,18 @@ func getHTTPResponseBytes(requestBody string, apiToken string, logger hclog.Logg
 		logger.Error("failed to execute multiSearch request")
 		return nil, err
 	}
-	return resp, err
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		logger.Error("can't read response body")
+		return nil, err
+	}
+	logger.Error(string(body))
+	if err := resp.Body.Close(); err != nil {
+		logger.Warn("can't close response body, possible memory leak")
+	}
+	logger.Debug(fmt.Sprintf("got response from logz.io: %s", string(body)))
+	return body, err
 }
 
 // GetDependencies returns an array of all the dependencies in a specific time range
