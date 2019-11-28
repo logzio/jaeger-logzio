@@ -75,11 +75,12 @@ var (
 
 // LogzioSpanReader is a struct which holds logzio span reader properties
 type LogzioSpanReader struct {
-	apiToken    string
-	logger      hclog.Logger
-	sourceFn    sourceFn
-	client      *http.Client
-	traceFinder TraceFinder
+	apiToken    			string
+	logger      			hclog.Logger
+	sourceFn    			sourceFn
+	client      			*http.Client
+	traceFinder 			TraceFinder
+	serviceOperationStorage *ServiceOperationStorage
 }
 
 // NewLogzioSpanReader creates a new logzio span reader
@@ -89,6 +90,7 @@ func NewLogzioSpanReader(config LogzioConfig, logger hclog.Logger) *LogzioSpanRe
 		apiToken:    config.APIToken,
 		sourceFn:    getSourceFn(),
 		traceFinder: NewTraceFinder(config.APIToken, logger),
+		serviceOperationStorage: NewServiceOperationStorage(logger, config.APIToken),
 	}
 }
 
@@ -123,7 +125,10 @@ func (reader *LogzioSpanReader) GetTrace(ctx context.Context, traceID model.Trac
 
 // GetServices returns an array of all the service named that are being monitored
 func (reader *LogzioSpanReader) GetServices(ctx context.Context) ([]string, error) {
-	return []string{"frontend"}, nil
+	span, ctx := opentracing.StartSpanFromContext(ctx, "GetServices")
+	defer span.Finish()
+	return reader.serviceOperationStorage.getServices(ctx)
+	//return []string{"frontend"}, nil
 }
 
 // GetOperations returns an array of all the operation a specific service performed
@@ -209,7 +214,7 @@ func getHTTPResponseBytes(requestBody string, apiToken string, logger hclog.Logg
 	req.Header.Add(apiTokenHeader, apiToken)
 	resp, err := client.Do(req)
 	if err != nil {
-		logger.Error("failed to execute multiSearch request" + err.Error())
+		logger.Error("failed to execute multiSearch request")
 		return nil, err
 	}
 	return resp, err

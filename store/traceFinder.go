@@ -156,8 +156,6 @@ func (finder *TraceFinder) findTraceIDsStrings(ctx context.Context, traceQuery *
 	aggregation := buildTraceIDAggregation(traceQuery.NumTraces)
 	boolQuery := finder.buildFindTraceIDsQuery(traceQuery)
 
-
-	//todo: add time range
 	searchService := elastic.NewSearchRequest().
 		Size(0). // set to 0 because we don't want actual documents.
 		Aggregation(traceIDAggregation, aggregation).
