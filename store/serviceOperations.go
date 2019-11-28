@@ -2,7 +2,6 @@ package store
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 
 	"github.com/hashicorp/go-hclog"
@@ -51,15 +50,9 @@ func (soStorage *ServiceOperationStorage) getServices(context context.Context) (
 	}
 	searchBody = fmt.Sprintf("{}\n%s\n", searchBody)
 	soStorage.logger.Error(searchBody)
-	responseBytes, err := getHTTPResponseBytes(searchBody, soStorage.apiToken, soStorage.logger)
+	multiSearchResult, err := getMultiSearchResult(searchBody, soStorage.apiToken, soStorage.logger)
 	if err != nil {
 		return nil, err
-	}
-
-	soStorage.logger.Error(string(responseBytes))
-	var multiSearchResult elastic.MultiSearchResult
-	if err := json.Unmarshal(responseBytes, &multiSearchResult); err != nil {
-		return nil, errors.Wrap(err, "failed to parse http response")
 	}
 
 	searchResult := multiSearchResult.Responses[0]

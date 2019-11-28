@@ -2,7 +2,6 @@ package store
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -74,16 +73,11 @@ func (finder *TraceFinder) getTracesMap(traceIDs []model.TraceID, startTime time
 		traceIDs = nil
 
 		finder.logger.Error(multiSearchBody)
-		resultsBytes, err := getHTTPResponseBytes(multiSearchBody, finder.apiToken, finder.logger)
-		if err != nil {
-			break
-		}
-		var results elastic.MultiSearchResult
-		if err = json.Unmarshal(resultsBytes, &results); err != nil {
-			finder.logger.Error("can't convert response to MultiSearchResult object")
-			break
-		}
-		if results.Responses == nil || len(results.Responses) == 0 {
+		results, err := getMultiSearchResult(multiSearchBody, finder.apiToken, finder.logger)
+		if err != nil || results.Responses == nil || len(results.Responses) == 0 {
+			if err != nil {
+				finder.logger.Error(err.Error())
+			}
 			break
 		}
 
@@ -165,15 +159,9 @@ func (finder *TraceFinder) findTraceIDsStrings(ctx context.Context, traceQuery *
 	}
 	requestBody = fmt.Sprintf("{}\n%s\n", requestBody)
 	finder.logger.Error(string(requestBody))
-	resultsBytes, err := getHTTPResponseBytes(requestBody, finder.apiToken, finder.logger)
+	multiSearchResult, err := getMultiSearchResult(requestBody, finder.apiToken, finder.logger)
 	if err != nil {
 		return nil, errors.Wrap(err, "Search service failed")
-	}
-
-	var multiSearchResult elastic.MultiSearchResult
-	if err = json.Unmarshal(resultsBytes, &multiSearchResult); err != nil {
-		finder.logger.Error("can't convert response to SearchResult object")
-		return nil, err
 	}
 	searchResult := multiSearchResult.Responses[0]
 	bucket, found := searchResult.Aggregations.Terms(traceIDAggregation)

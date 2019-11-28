@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -183,31 +184,36 @@ func validateQuery(p *spanstore.TraceQueryParameters) error {
 	return nil
 }
 
-func getHTTPResponseBytes(requestBody string, apiToken string, logger hclog.Logger) ([]byte, error) {
+func getMultiSearchResult(requestBody string, apiToken string, logger hclog.Logger) (elastic.MultiSearchResult, error) {
 	client := http.Client{}
 	req, err := http.NewRequest(httpPost, "https://api-eu.logz.io/v1/elasticsearch/_msearch", strings.NewReader(requestBody))
 	if err != nil {
 		logger.Error("failed to create multiSearch request")
-		return nil, err
+		return elastic.MultiSearchResult{}, err
 	}
 	req.Header.Add(apiTokenHeader, apiToken)
 	resp, err := client.Do(req)
 	if err != nil {
 		logger.Error("failed to execute multiSearch request")
-		return nil, err
+		return elastic.MultiSearchResult{}, err
 	}
 
-	body, err := ioutil.ReadAll(resp.Body)
+	responseBytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		logger.Error("can't read response body")
-		return nil, err
+		return elastic.MultiSearchResult{}, err
 	}
-	logger.Error(string(body))
+	logger.Error(string(responseBytes))
 	if err := resp.Body.Close(); err != nil {
 		logger.Warn("can't close response body, possible memory leak")
 	}
-	logger.Debug(fmt.Sprintf("got response from logz.io: %s", string(body)))
-	return body, err
+	logger.Debug(fmt.Sprintf("got response from logz.io: %s", string(responseBytes)))
+
+	var multiSearchResult elastic.MultiSearchResult
+	if err := json.Unmarshal(responseBytes, &multiSearchResult); err != nil {
+		return elastic.MultiSearchResult{}, errors.Wrap(err, "failed to parse http response")
+	}
+	return multiSearchResult, err
 }
 
 // GetDependencies returns an array of all the dependencies in a specific time range
