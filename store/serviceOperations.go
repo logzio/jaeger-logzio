@@ -11,9 +11,7 @@ import (
 )
 
 const (
-	serviceName           = "serviceName"
-	operationsAggregation = "distinct_operations"
-	servicesAggregation   = "distinct_services"
+	serviceName = "serviceName"
 )
 
 // ServiceOperationStorage stores service to operation pairs.
@@ -34,17 +32,33 @@ func NewServiceOperationStorage(logger hclog.Logger, apiToken string) *ServiceOp
 }
 
 func (soStorage *ServiceOperationStorage) getServices(context context.Context) ([]string, error) {
-	serviceAggregation := getServicesAggregation()
+	return soStorage.getUniqueValues(context, serviceName)
+}
 
-	//searchService := soStorage.client.Search().
-	//	Size(0). // set to 0 because we don't want actual documents.
-	//	IgnoreUnavailable(true).
-	//	Aggregation(servicesAggregation, serviceAggregation)
+func (soStorage *ServiceOperationStorage) getOperations(context context.Context, service string) ([]string, error) {
+	serviceQuery := elastic.NewTermQuery(serviceName, service)
+	return soStorage.getUniqueValues(context, operationNameField, serviceQuery)
+}
 
-	searchBody, err := elastic.NewSearchRequest().
+func getAggregation(field string) elastic.Query {
+	return elastic.NewTermsAggregation().
+		Field(field).
+		Size(logzioMaxAggregationSize)
+}
+
+func (soStorage *ServiceOperationStorage) getUniqueValues(context context.Context, field string, termsQuery ...elastic.Query ) ([]string, error) {
+	serviceFilter := getAggregation(field)
+	aggregationString := "distinct_" + field
+
+	searchRequest := elastic.NewSearchRequest().
 		Size(0).
 		IgnoreUnavailable(true).
-		Aggregation(servicesAggregation, serviceAggregation).Body()
+		Aggregation(aggregationString, serviceFilter)
+
+	if len(termsQuery) > 0 {
+		searchRequest = searchRequest.Query(termsQuery[0])
+	}
+	searchBody, err := searchRequest.Body()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create search service request")
 	}
@@ -59,16 +73,10 @@ func (soStorage *ServiceOperationStorage) getServices(context context.Context) (
 	if searchResult.Aggregations == nil {
 		return []string{}, nil
 	}
-	bucket, found := searchResult.Aggregations.Terms(servicesAggregation)
+	bucket, found := searchResult.Aggregations.Terms(aggregationString)
 	if !found {
-		return nil, errors.New("Could not find aggregation of " + servicesAggregation)
+		return nil, errors.New("Could not find aggregation of " + aggregationString)
 	}
-	serviceNamesBucket := bucket.Buckets
-	return bucketToStringArray(serviceNamesBucket)
-}
-
-func getServicesAggregation() elastic.Query {
-	return elastic.NewTermsAggregation().
-		Field(serviceName).
-		Size(logzioMaxAggregationSize) // Must set to some large number. ES deprecated size omission for aggregating all. https://github.com/elastic/elasticsearch/issues/18838
+	operationNamesBucket := bucket.Buckets
+	return bucketToStringArray(operationNamesBucket)
 }
