@@ -111,7 +111,7 @@ func (reader *LogzioSpanReader) GetTrace(ctx context.Context, traceID model.Trac
 	span, ctx := opentracing.StartSpanFromContext(ctx, "GetTrace")
 	defer span.Finish()
 	currentTime := time.Now()
-	traces, err := reader.traceFinder.multiRead(ctx, []model.TraceID{traceID}, currentTime.Add(-time.Hour*240), currentTime)
+	traces, err := reader.traceFinder.multiRead(ctx, []model.TraceID{traceID}, currentTime.Add(-time.Hour*48), currentTime)
 	if err != nil {
 		return nil, err
 	}
@@ -186,6 +186,9 @@ func validateQuery(p *spanstore.TraceQueryParameters) error {
 }
 
 func (reader *LogzioSpanReader) getMultiSearchResult(requestBody string) (elastic.MultiSearchResult, error) {
+	if reader.apiToken == "" {
+		return elastic.MultiSearchResult{}, errors.New("empty API token, can't perform search")
+	}
 	client := http.Client{}
 	req, err := http.NewRequest(httpPost, reader.apiURL, strings.NewReader(requestBody))
 	if err != nil {

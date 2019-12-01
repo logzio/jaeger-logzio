@@ -28,6 +28,7 @@ type LogzioConfig struct {
 	CustomAPIURL      string `yaml:"customAPIUrl"`
 }
 
+
 // Validate logzio config, return error if invalid
 func (config *LogzioConfig) Validate() error {
 	if config.AccountToken == "" && config.APIToken == "" {
