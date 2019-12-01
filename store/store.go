@@ -16,10 +16,10 @@ type Store struct {
 func NewLogzioStore(config LogzioConfig, logger hclog.Logger) *Store {
 	reader := NewLogzioSpanReader(config, logger)
 	if config.APIToken == "" {
-		logger.Warn( "No api token found, can't create span reader")
+		logger.Warn("No api token found, can't create span reader")
 	}
 	if config.AccountToken == "" {
-		logger.Warn( "No account token found, spans will not be saved")
+		logger.Warn("No account token found, spans will not be saved")
 	}
 	writer, err := NewLogzioSpanWriter(config, logger)
 	if err != nil {

@@ -29,6 +29,7 @@ func NewTraceFinder(reader *LogzioSpanReader) TraceFinder {
 		logger:   reader.logger,
 		sourceFn: getSourceFn(),
 		reader:   reader,
+		spanConverter:	dbmodel.NewToDomain("@"),
 	}
 }
 

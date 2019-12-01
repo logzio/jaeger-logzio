@@ -16,7 +16,6 @@ const (
 
 // ServiceOperationStorage stores service to operation pairs.
 type ServiceOperationStorage struct {
-	client       elastic.Client
 	logger       hclog.Logger
 	serviceCache cache.Cache
 	reader       *LogzioSpanReader
@@ -25,7 +24,6 @@ type ServiceOperationStorage struct {
 // NewServiceOperationStorage returns a new ServiceOperationStorage.
 func NewServiceOperationStorage(reader *LogzioSpanReader) *ServiceOperationStorage {
 	return &ServiceOperationStorage{
-		client: elastic.Client{},
 		reader: reader,
 		logger: reader.logger,
 	}
