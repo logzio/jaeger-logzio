@@ -45,7 +45,7 @@ type LogzioSpanWriter struct {
 func NewLogzioSpanWriter(config LogzioConfig, logger hclog.Logger) (*LogzioSpanWriter, error) {
 	sender, err := logzio.New(
 		config.AccountToken,
-		logzio.SetUrl(config.ListenerURL),
+		logzio.SetUrl(config.ListenerURL()),
 		logzio.SetDebug(&loggerWriter{logger: logger}),
 		logzio.SetDrainDiskThreshold(dropLogsDiskThreshold))
 

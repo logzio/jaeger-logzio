@@ -19,15 +19,15 @@ type ServiceOperationStorage struct {
 	client       elastic.Client
 	logger       hclog.Logger
 	serviceCache cache.Cache
-	apiToken     string
+	reader       *LogzioSpanReader
 }
 
 // NewServiceOperationStorage returns a new ServiceOperationStorage.
-func NewServiceOperationStorage(logger hclog.Logger, apiToken string) *ServiceOperationStorage {
+func NewServiceOperationStorage(reader *LogzioSpanReader) *ServiceOperationStorage {
 	return &ServiceOperationStorage{
-		client:   elastic.Client{},
-		logger:   logger,
-		apiToken: apiToken,
+		client: elastic.Client{},
+		reader: reader,
+		logger: reader.logger,
 	}
 }
 
@@ -46,7 +46,7 @@ func getAggregation(field string) elastic.Query {
 		Size(logzioMaxAggregationSize)
 }
 
-func (soStorage *ServiceOperationStorage) getUniqueValues(context context.Context, field string, termsQuery ...elastic.Query ) ([]string, error) {
+func (soStorage *ServiceOperationStorage) getUniqueValues(context context.Context, field string, termsQuery ...elastic.Query) ([]string, error) {
 	serviceFilter := getAggregation(field)
 	aggregationString := "distinct_" + field
 
@@ -64,7 +64,7 @@ func (soStorage *ServiceOperationStorage) getUniqueValues(context context.Contex
 	}
 	searchBody = fmt.Sprintf("{}\n%s\n", searchBody)
 	soStorage.logger.Error(searchBody)
-	multiSearchResult, err := getMultiSearchResult(searchBody, soStorage.apiToken, soStorage.logger)
+	multiSearchResult, err := soStorage.reader.getMultiSearchResult(searchBody)
 	if err != nil {
 		return nil, err
 	}

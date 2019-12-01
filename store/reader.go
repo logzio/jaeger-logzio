@@ -12,8 +12,6 @@ import (
 	"github.com/olivere/elastic"
 	"github.com/opentracing/opentracing-go"
 
-	//ottag "github.com/opentracing/opentracing-go/ext"
-	//otlog "github.com/opentracing/opentracing-go/log"
 	"github.com/pkg/errors"
 
 	"github.com/hashicorp/go-hclog"
@@ -73,6 +71,7 @@ var (
 // LogzioSpanReader is a struct which holds logzio span reader properties
 type LogzioSpanReader struct {
 	apiToken                string
+	apiURL                  string
 	logger                  hclog.Logger
 	sourceFn                sourceFn
 	client                  *http.Client
@@ -82,13 +81,15 @@ type LogzioSpanReader struct {
 
 // NewLogzioSpanReader creates a new logzio span reader
 func NewLogzioSpanReader(config LogzioConfig, logger hclog.Logger) *LogzioSpanReader {
-	return &LogzioSpanReader{
-		logger:                  logger,
-		apiToken:                config.APIToken,
-		sourceFn:                getSourceFn(),
-		traceFinder:             NewTraceFinder(config.APIToken, logger),
-		serviceOperationStorage: NewServiceOperationStorage(logger, config.APIToken),
+	reader := &LogzioSpanReader{
+		logger:   logger,
+		apiToken: config.APIToken,
+		apiURL:   config.APIURL(),
+		sourceFn: getSourceFn(),
 	}
+	reader.serviceOperationStorage = NewServiceOperationStorage(reader)
+	reader.traceFinder = NewTraceFinder(reader)
+	return reader
 }
 
 type sourceFn func(query elastic.Query, nextTime uint64) *elastic.SearchSource
@@ -184,30 +185,30 @@ func validateQuery(p *spanstore.TraceQueryParameters) error {
 	return nil
 }
 
-func getMultiSearchResult(requestBody string, apiToken string, logger hclog.Logger) (elastic.MultiSearchResult, error) {
+func (reader *LogzioSpanReader) getMultiSearchResult(requestBody string) (elastic.MultiSearchResult, error) {
 	client := http.Client{}
-	req, err := http.NewRequest(httpPost, "https://api-eu.logz.io/v1/elasticsearch/_msearch", strings.NewReader(requestBody))
+	req, err := http.NewRequest(httpPost, reader.apiURL, strings.NewReader(requestBody))
 	if err != nil {
-		logger.Error("failed to create multiSearch request")
+		reader.logger.Error("failed to create multiSearch request")
 		return elastic.MultiSearchResult{}, err
 	}
-	req.Header.Add(apiTokenHeader, apiToken)
+	req.Header.Add(apiTokenHeader, reader.apiToken)
 	resp, err := client.Do(req)
 	if err != nil {
-		logger.Error("failed to execute multiSearch request")
+		reader.logger.Error("failed to execute multiSearch request")
 		return elastic.MultiSearchResult{}, err
 	}
 
 	responseBytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		logger.Error("can't read response body")
+		reader.logger.Error("can't read response body")
 		return elastic.MultiSearchResult{}, err
 	}
-	logger.Error(string(responseBytes))
+	reader.logger.Error(string(responseBytes))
 	if err := resp.Body.Close(); err != nil {
-		logger.Warn("can't close response body, possible memory leak")
+		reader.logger.Warn("can't close response body, possible memory leak")
 	}
-	logger.Debug(fmt.Sprintf("got response from logz.io: %s", string(responseBytes)))
+	reader.logger.Debug(fmt.Sprintf("got response from logz.io: %s", string(responseBytes)))
 
 	var multiSearchResult elastic.MultiSearchResult
 	if err := json.Unmarshal(responseBytes, &multiSearchResult); err != nil {

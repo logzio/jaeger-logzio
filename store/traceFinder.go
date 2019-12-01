@@ -20,15 +20,15 @@ type TraceFinder struct {
 	logger        hclog.Logger
 	sourceFn      sourceFn
 	spanConverter dbmodel.ToDomain
-	apiToken      string
+	reader        *LogzioSpanReader
 }
 
 // NewTraceFinder creates trace finder object
-func NewTraceFinder(apiToken string, logger hclog.Logger) TraceFinder {
+func NewTraceFinder(reader *LogzioSpanReader) TraceFinder {
 	return TraceFinder{
-		apiToken: apiToken,
-		logger:   logger,
+		logger:   reader.logger,
 		sourceFn: getSourceFn(),
+		reader:   reader,
 	}
 }
 
@@ -73,7 +73,7 @@ func (finder *TraceFinder) getTracesMap(traceIDs []model.TraceID, startTime time
 		traceIDs = nil
 
 		finder.logger.Error(multiSearchBody)
-		results, err := getMultiSearchResult(multiSearchBody, finder.apiToken, finder.logger)
+		results, err := finder.reader.getMultiSearchResult(multiSearchBody)
 		if err != nil || results.Responses == nil || len(results.Responses) == 0 {
 			if err != nil {
 				finder.logger.Error(err.Error())
@@ -159,7 +159,7 @@ func (finder *TraceFinder) findTraceIDsStrings(ctx context.Context, traceQuery *
 	}
 	requestBody = fmt.Sprintf("{}\n%s\n", requestBody)
 	finder.logger.Error(string(requestBody))
-	multiSearchResult, err := getMultiSearchResult(requestBody, finder.apiToken, finder.logger)
+	multiSearchResult, err := finder.reader.getMultiSearchResult(requestBody)
 	if err != nil {
 		return nil, errors.Wrap(err, "Search service failed")
 	}
