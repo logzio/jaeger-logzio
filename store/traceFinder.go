@@ -26,10 +26,10 @@ type TraceFinder struct {
 // NewTraceFinder creates trace finder object
 func NewTraceFinder(reader *LogzioSpanReader) TraceFinder {
 	return TraceFinder{
-		logger:   reader.logger,
-		sourceFn: getSourceFn(),
-		reader:   reader,
-		spanConverter:	dbmodel.NewToDomain("@"),
+		logger:        reader.logger,
+		sourceFn:      getSourceFn(),
+		reader:        reader,
+		spanConverter: dbmodel.NewToDomain("@"),
 	}
 }
 

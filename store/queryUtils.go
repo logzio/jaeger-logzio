@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/jaegertracing/jaeger/storage/spanstore"
 	"jaeger-logzio/store/objects"
 	"time"
 
@@ -100,3 +101,23 @@ func bucketToStringArray(buckets []*elastic.AggregationBucketKeyItem) ([]string,
 	}
 	return strings, nil
 }
+
+func validateQuery(p *spanstore.TraceQueryParameters) error {
+	if p == nil {
+		return ErrMalformedRequestObject
+	}
+	if p.ServiceName == "" && len(p.Tags) > 0 {
+		return ErrServiceNameNotSet
+	}
+	if p.StartTimeMin.IsZero() || p.StartTimeMax.IsZero() {
+		return ErrStartAndEndTimeNotSet
+	}
+	if p.StartTimeMax.Before(p.StartTimeMin) {
+		return ErrStartTimeMinGreaterThanMax
+	}
+	if p.DurationMin != 0 && p.DurationMax != 0 && p.DurationMin > p.DurationMax {
+		return ErrDurationMinGreaterThanMax
+	}
+	return nil
+}
+

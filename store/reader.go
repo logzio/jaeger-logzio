@@ -40,7 +40,7 @@ const (
 	defaultDocCount          = 10000 // the default elasticsearch allowed limit
 	logzioMaxAggregationSize = 1000
 	defaultNumTraces         = 100
-	maxSearchWindowHours 	= 48
+	maxSearchWindowHours     = 48
 )
 
 var (
@@ -146,7 +146,7 @@ func (reader *LogzioSpanReader) FindTraces(ctx context.Context, query *spanstore
 		return nil, err
 	}
 	if query.StartTimeMax.Sub(query.StartTimeMin).Hours() > maxSearchWindowHours {
-		query.StartTimeMin = query.StartTimeMax.Add(-time.Hour* maxSearchWindowHours)
+		query.StartTimeMin = query.StartTimeMax.Add(-time.Hour * maxSearchWindowHours)
 	}
 	return reader.traceFinder.multiRead(ctx, uniqueTraceIDs, query.StartTimeMin, query.StartTimeMax)
 }
@@ -168,25 +168,6 @@ func (reader *LogzioSpanReader) FindTraceIDs(ctx context.Context, query *spansto
 	}
 	reader.logger.Error(fmt.Sprint(esTraceIDs))
 	return convertTraceIDsStringsToModels(esTraceIDs)
-}
-
-func validateQuery(p *spanstore.TraceQueryParameters) error {
-	if p == nil {
-		return ErrMalformedRequestObject
-	}
-	if p.ServiceName == "" && len(p.Tags) > 0 {
-		return ErrServiceNameNotSet
-	}
-	if p.StartTimeMin.IsZero() || p.StartTimeMax.IsZero() {
-		return ErrStartAndEndTimeNotSet
-	}
-	if p.StartTimeMax.Before(p.StartTimeMin) {
-		return ErrStartTimeMinGreaterThanMax
-	}
-	if p.DurationMin != 0 && p.DurationMax != 0 && p.DurationMin > p.DurationMax {
-		return ErrDurationMinGreaterThanMax
-	}
-	return nil
 }
 
 func (reader *LogzioSpanReader) getMultiSearchResult(requestBody string) (elastic.MultiSearchResult, error) {
