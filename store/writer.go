@@ -59,7 +59,7 @@ func NewLogzioSpanWriter(config LogzioConfig, logger hclog.Logger) (*LogzioSpanW
 		serviceCache: cache.NewLRUWithOptions(
 			100000,
 			&cache.Options{
-				TTL: 48 * time.Hour,
+				TTL: 24 * time.Hour,
 			},
 		),
 	}
