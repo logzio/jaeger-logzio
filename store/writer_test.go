@@ -2,8 +2,6 @@ package store
 
 import (
 	"encoding/json"
-	"github.com/hashicorp/go-hclog"
-	"github.com/jaegertracing/jaeger/model"
 	"io/ioutil"
 	"jaeger-logzio/store/objects"
 	"net/http"
@@ -11,23 +9,25 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/hashicorp/go-hclog"
+	"github.com/jaegertracing/jaeger/model"
 )
 
 const (
 	testOperation = "testOperation"
-	testService = "testService"
+	testService   = "testService"
 )
 
 func TestWriteSpan(tester *testing.T) {
-	var recorderRequests []byte
+	var recordedRequests []byte
 	logger := hclog.New(&hclog.LoggerOptions{
 		Level:      hclog.Debug,
 		Name:       "jaeger-logzio-tests",
 		JSONFormat: true,
 	})
 	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		recorderRequests, _ = ioutil.ReadAll(req.Body)
-		//response = append(response, []byte("\n")...)
+		recordedRequests, _ = ioutil.ReadAll(req.Body)
 		rw.WriteHeader(http.StatusOK)
 	}))
 
@@ -43,13 +43,13 @@ func TestWriteSpan(tester *testing.T) {
 		StartTime: date,
 	}
 
-	writer, _ := NewLogzioSpanWriter(LogzioConfig{AccountToken:testAccountToken, CustomListenerURL:server.URL}, logger)
+	writer, _ := NewLogzioSpanWriter(LogzioConfig{AccountToken: testAccountToken, CustomListenerURL: server.URL}, logger)
 	err := writer.WriteSpan(span)
 	if err != nil {
 		tester.Errorf("failed write span test: %s", err.Error())
 	}
-	time.Sleep(time.Second*6)
-	requests := strings.Split(string(recorderRequests), "\n")
+	time.Sleep(time.Second * 6)
+	requests := strings.Split(string(recordedRequests), "\n")
 	var logzioSpan objects.LogzioSpan
 	if err := json.Unmarshal([]byte(requests[0]), &logzioSpan); err != nil {
 		tester.Errorf("failed to parse recorded request to logzio span: %s", err.Error())
@@ -66,4 +66,3 @@ func TestWriteSpan(tester *testing.T) {
 		tester.Errorf("wrong span! got %s", requests[1])
 	}
 }
-
