@@ -50,7 +50,7 @@ func TestRegion(tester *testing.T) {
 		tester.Errorf("api url incorrect, got: %s, expected: https://api.logz.io/v1/elasticsearch/_msearch", config.APIURL())
 	}
 
-	config.Region = "na"
+	config.Region = "us"
 	if config.ListenerURL() != "https://listener.logz.io:8071" {
 		tester.Errorf("listener url incorrect, got: %s, expected: https://listener.logz.io:8071", config.ListenerURL())
 	}

@@ -17,6 +17,7 @@ const (
 	regionParam         = "region"
 	customListenerParam = "customListener"
 	customAPIParam      = "customAPI"
+	usRegionCode        = "us"
 )
 
 // LogzioConfig struct for logzio span store
@@ -82,7 +83,7 @@ func (config *LogzioConfig) APIURL() string {
 
 func (config *LogzioConfig) regionCode() string {
 	regionCode := ""
-	if config.Region != "" && config.Region != "na" {
+	if config.Region != "" && config.Region != usRegionCode {
 		regionCode = fmt.Sprintf("-%s", config.Region)
 	}
 	return regionCode
