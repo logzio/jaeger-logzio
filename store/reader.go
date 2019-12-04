@@ -141,12 +141,12 @@ func (reader *LogzioSpanReader) FindTraces(ctx context.Context, query *spanstore
 	span, ctx := opentracing.StartSpanFromContext(ctx, "FindTraces")
 	defer span.Finish()
 
+	if query.StartTimeMax.Sub(query.StartTimeMin).Hours() > maxSearchWindowHours {
+		query.StartTimeMin = query.StartTimeMax.Add(-time.Hour * maxSearchWindowHours)
+	}
 	uniqueTraceIDs, err := reader.FindTraceIDs(ctx, query)
 	if err != nil {
 		return nil, err
-	}
-	if query.StartTimeMax.Sub(query.StartTimeMin).Hours() > maxSearchWindowHours {
-		query.StartTimeMin = query.StartTimeMax.Add(-time.Hour * maxSearchWindowHours)
 	}
 	return reader.traceFinder.multiRead(ctx, uniqueTraceIDs, query.StartTimeMin, query.StartTimeMax)
 }
