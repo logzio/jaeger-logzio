@@ -2,10 +2,11 @@ package main
 
 import (
 	"flag"
-	"github.com/hashicorp/go-hclog"
-	"github.com/jaegertracing/jaeger/plugin/storage/grpc"
 	"jaeger-logzio/store"
 	"os"
+
+	"github.com/hashicorp/go-hclog"
+	"github.com/jaegertracing/jaeger/plugin/storage/grpc"
 )
 
 const (
@@ -34,7 +35,7 @@ func main() {
 		logger.Error(err.Error())
 		os.Exit(0)
 	}
-	logger.Debug(logzioConfig.String())
+	logger.Info(logzioConfig.String())
 	logzioStore := store.NewLogzioStore(logzioConfig, logger)
 	grpc.Serve(logzioStore)
 	logzioStore.Close()

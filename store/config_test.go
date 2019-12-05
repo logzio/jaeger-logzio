@@ -8,6 +8,10 @@ const (
 	testAccountToken = "testAccountToken"
 	testAPIToken     = "testApiToken"
 	testRegion       = "testRegion"
+	listenerURL      = "https://listener.logz.io:8071"
+	listenerURLEu    = "https://listener-eu.logz.io:8071"
+	apiURL           = "https://api.logz.io/v1/elasticsearch/_msearch"
+	apiURLEu         = "https://api-eu.logz.io/v1/elasticsearch/_msearch"
 )
 
 func TestValidate(tester *testing.T) {
@@ -42,28 +46,28 @@ func TestRegion(tester *testing.T) {
 		Region:       "",
 	}
 
-	if config.ListenerURL() != "https://listener.logz.io:8071" {
-		tester.Errorf("listener url incorrect, got: %s, expected: https://listener.logz.io:8071", config.ListenerURL())
+	if config.ListenerURL() != listenerURL {
+		tester.Errorf("listener url incorrect, got: %s, expected: %s", config.ListenerURL(), listenerURL)
 	}
 
-	if config.APIURL() != "https://api.logz.io/v1/elasticsearch/_msearch" {
-		tester.Errorf("api url incorrect, got: %s, expected: https://api.logz.io/v1/elasticsearch/_msearch", config.APIURL())
+	if config.APIURL() != apiURL {
+		tester.Errorf("api url incorrect, got: %s, expected: %s", config.APIURL(), apiURL)
 	}
 
 	config.Region = "us"
-	if config.ListenerURL() != "https://listener.logz.io:8071" {
-		tester.Errorf("listener url incorrect, got: %s, expected: https://listener.logz.io:8071", config.ListenerURL())
+	if config.ListenerURL() != listenerURL {
+		tester.Errorf("listener url incorrect, got: %s, expected: %s", config.ListenerURL(), listenerURL)
 	}
-	if config.APIURL() != "https://api.logz.io/v1/elasticsearch/_msearch" {
-		tester.Errorf("api url incorrect, got: %s, expected: https://api.logz.io/v1/elasticsearch/_msearch", config.APIURL())
+	if config.APIURL() != apiURL {
+		tester.Errorf("api url incorrect, got: %s, expected: %s", config.APIURL(), apiURL)
 	}
 
 	config.Region = "eu"
-	if config.ListenerURL() != "https://listener-eu.logz.io:8071" {
-		tester.Errorf("listener url incorrect, got: %s, expected: https://listener.logz.io:8071", config.ListenerURL())
+	if config.ListenerURL() != listenerURLEu {
+		tester.Errorf("listener url incorrect, got: %s, expected: %s", config.ListenerURL(), listenerURLEu)
 	}
-	if config.APIURL() != "https://api-eu.logz.io/v1/elasticsearch/_msearch" {
-		tester.Errorf("api url incorrect, got: %s, expected: https://api-eu.logz.io/v1/elasticsearch/_msearch", config.APIURL())
+	if config.APIURL() != apiURLEu {
+		tester.Errorf("api url incorrect, got: %s, expected: %s", config.APIURL(), apiURLEu)
 	}
 }
 

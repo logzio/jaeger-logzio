@@ -4,13 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/jaegertracing/jaeger/storage/spanstore"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/jaegertracing/jaeger/storage/spanstore"
 
 	"github.com/hashicorp/go-hclog"
 	"github.com/jaegertracing/jaeger/model"
@@ -24,14 +25,13 @@ var (
 		JSONFormat: true,
 	})
 	recordedRequests []byte
-	server = httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+	server           = httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		recordedRequests, _ = ioutil.ReadAll(req.Body)
 		rw.WriteHeader(http.StatusOK)
 		if strings.Contains(string(recordedRequests), "{\"aggregations\":{\"traceIDs\"") {
 			resp, _ := ioutil.ReadFile("fixtures/trace_ids_response.json")
 			_, _ = rw.Write(resp)
 		}
-		logger.Info(string(recordedRequests))
 	}))
 	reader = NewLogzioSpanReader(LogzioConfig{APIToken: testAPIToken, CustomAPIURL: server.URL}, logger)
 )
@@ -39,10 +39,10 @@ var (
 func checkRecordedRequestAndGetBody(tester *testing.T, requestCount int) string {
 	requestLines := strings.Split(string(recordedRequests), "\n")
 	if len(requestLines) != (requestCount*2)+1 {
-		tester.Fatalf("wrong number of requests. expected %d got : %d",(requestCount*2)+1 ,len(requestLines)) // n * (header + body) + empty NewLine
+		tester.Fatalf("wrong number of requests. expected %d got : %d", (requestCount*2)+1, len(requestLines)) // n * (header + body) + empty NewLine
 	}
 	fullBody := ""
-	for i := 1; i < len(requestLines) ; i += 2  {
+	for i := 1; i < len(requestLines); i += 2 {
 		reqBody := requestLines[i]
 		var searchRequest elastic.SearchRequest
 		if err := json.Unmarshal([]byte(reqBody), &searchRequest); err != nil {
@@ -79,7 +79,7 @@ func TestGetOperations(tester *testing.T) {
 		tester.Errorf("operationName field is not in request")
 	}
 
-	if !strings.Contains(reqBody, fmt.Sprintf("{\"term\":{\"serviceName\":\"%s\"}}",testService)) {
+	if !strings.Contains(reqBody, fmt.Sprintf("{\"term\":{\"serviceName\":\"%s\"}}", testService)) {
 		tester.Errorf("service filter is incorrect or not exist")
 	}
 }
@@ -88,10 +88,10 @@ func TestFindTraces(tester *testing.T) {
 	const minTime = 1000000
 	const maxTime = 2000000
 	query := spanstore.TraceQueryParameters{
-		ServiceName:	testService,
-		OperationName:	testOperation,
-		StartTimeMin:	time.Unix(0, minTime*1000),
-		StartTimeMax:	time.Unix(0, maxTime*1000),
+		ServiceName:   testService,
+		OperationName: testOperation,
+		StartTimeMin:  time.Unix(0, minTime*1000),
+		StartTimeMax:  time.Unix(0, maxTime*1000),
 	}
 	_, _ = reader.FindTraces(context.Background(), &query)
 	reqBody := checkRecordedRequestAndGetBody(tester, 2)
@@ -108,8 +108,8 @@ func TestFindTraces(tester *testing.T) {
 }
 
 func TestFindTraceIDs(tester *testing.T) {
-	const minTime= 1000000
-	const maxTime= 2000000
+	const minTime = 1000000
+	const maxTime = 2000000
 	query := spanstore.TraceQueryParameters{
 		ServiceName:   testService,
 		OperationName: testOperation,

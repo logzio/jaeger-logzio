@@ -90,6 +90,13 @@ func (config *LogzioConfig) regionCode() string {
 }
 
 func (config *LogzioConfig) String() string {
-	desc := fmt.Sprintf("account token: %v \n api token: %v \n listener url: %v", config.AccountToken, config.APIURL(), config.ListenerURL())
+	desc := fmt.Sprintf("account token: %v \n api token: %v \n listener url: %v", censorString(config.AccountToken, 4), censorString(config.APIToken, 9), config.ListenerURL())
 	return desc
+}
+
+func censorString(word string, n int) string {
+	if len(word) > 2*n {
+		return word[:n] + strings.Repeat("*", len(word)-(n*2)) + word[len(word)-n:]
+	}
+	return strings.Repeat("*", len(word))
 }

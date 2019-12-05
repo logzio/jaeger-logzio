@@ -7,7 +7,11 @@ import (
 	"github.com/jaegertracing/jaeger/plugin/storage/es/spanstore/dbmodel"
 )
 
-const spanLogType = "jaegerSpan"
+const (
+	spanLogType                = "jaegerSpan"
+	//TagDotReplacementCharacter state which character should replace the dot in es
+	TagDotReplacementCharacter = "@"
+)
 
 // LogzioSpan is same as esSpan with a few different json field names and an addition on type field.
 type LogzioSpan struct {
@@ -38,7 +42,7 @@ func getTagsValues(tags []model.KeyValue) []string {
 // TransformToLogzioSpanBytes receives a Jaeger span, converts it to logzio span and returns it as a byte array.
 // The main differences between Jaeger span and logzio span are arrays which are represented as maps
 func TransformToLogzioSpanBytes(span *model.Span) ([]byte, error) {
-	spanConverter := dbmodel.NewFromDomain(true, getTagsValues(span.Tags), "@")
+	spanConverter := dbmodel.NewFromDomain(true, getTagsValues(span.Tags), TagDotReplacementCharacter)
 	jsonSpan := spanConverter.FromDomainEmbedProcess(span)
 	logzioSpan := LogzioSpan{
 		TraceID:         jsonSpan.TraceID,
@@ -53,7 +57,7 @@ func TransformToLogzioSpanBytes(span *model.Span) ([]byte, error) {
 		Tags:            jsonSpan.Tags,
 		Tag:             jsonSpan.Tag,
 		Process:         jsonSpan.Process,
-		Logs:			 jsonSpan.Logs,
+		Logs:            jsonSpan.Logs,
 		Type:            spanLogType,
 	}
 	return json.Marshal(logzioSpan)

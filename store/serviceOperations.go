@@ -61,7 +61,6 @@ func (soStorage *ServiceOperationStorage) getUniqueValues(context context.Contex
 		return nil, errors.Wrap(err, "failed to create search service request")
 	}
 	searchBody = fmt.Sprintf("{}\n%s\n", searchBody)
-	soStorage.logger.Error(searchBody)
 	multiSearchResult, err := soStorage.reader.getMultiSearchResult(searchBody)
 	if err != nil {
 		return nil, err

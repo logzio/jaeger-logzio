@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"fmt"
+	"jaeger-logzio/store/objects"
 	"time"
 
 	"github.com/jaegertracing/jaeger/storage/spanstore"
@@ -29,7 +30,7 @@ func NewTraceFinder(reader *LogzioSpanReader) TraceFinder {
 		logger:        reader.logger,
 		sourceFn:      getSourceFn(),
 		reader:        reader,
-		spanConverter: dbmodel.NewToDomain("@"),
+		spanConverter: dbmodel.NewToDomain(objects.TagDotReplacementCharacter),
 	}
 }
 
@@ -52,7 +53,6 @@ func (finder *TraceFinder) traceIDsMultiSearchRequestBody(traceIDs []model.Trace
 			finder.logger.Warn(fmt.Sprintf("can't create search request for traceID %s, skipping..", traceID.String()))
 			continue
 		}
-		finder.logger.Debug(fmt.Sprintf("creating logzio search request: %s", requestBody))
 		// add search {}\n to prefix and \n to suffix of the search request to match it to multiSearch format
 		multiSearchBody = fmt.Sprintf("%s{}\n%s\n", multiSearchBody, requestBody)
 	}
@@ -65,7 +65,6 @@ func (finder *TraceFinder) getTracesMap(traceIDs []model.TraceID, startTime time
 	totalDocumentsFetched := make(map[model.TraceID]int)
 	tracesMap := make(map[model.TraceID]*model.Trace)
 	for {
-		finder.logger.Debug("TraceIds left to process for multiRead: " + string(len(traceIDs)))
 		if len(traceIDs) == 0 {
 			break
 		}
@@ -73,7 +72,6 @@ func (finder *TraceFinder) getTracesMap(traceIDs []model.TraceID, startTime time
 		// set traceIDs to empty
 		traceIDs = nil
 
-		finder.logger.Error(multiSearchBody)
 		results, err := finder.reader.getMultiSearchResult(multiSearchBody)
 		if err != nil || results.Responses == nil || len(results.Responses) == 0 {
 			if err != nil {
@@ -155,11 +153,9 @@ func (finder *TraceFinder) findTraceIDsStrings(ctx context.Context, traceQuery *
 
 	requestBody, err := searchService.Body()
 	if err != nil {
-		finder.logger.Warn("can't create search request for trace query")
-		return nil, err
+		return nil, errors.Wrap(err, "can't create search request for trace query")
 	}
 	requestBody = fmt.Sprintf("{}\n%s\n", requestBody)
-	finder.logger.Error(string(requestBody))
 	multiSearchResult, err := finder.reader.getMultiSearchResult(requestBody)
 	if err != nil {
 		return nil, errors.Wrap(err, "Search service failed")

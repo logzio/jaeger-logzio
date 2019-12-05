@@ -4,9 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/jaegertracing/jaeger/storage/spanstore"
 	"jaeger-logzio/store/objects"
 	"time"
+
+	"github.com/jaegertracing/jaeger/storage/spanstore"
 
 	"github.com/jaegertracing/jaeger/model"
 	"github.com/olivere/elastic"
@@ -120,4 +121,3 @@ func validateQuery(p *spanstore.TraceQueryParameters) error {
 	}
 	return nil
 }
-

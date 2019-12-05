@@ -99,9 +99,9 @@ func getSourceFn() sourceFn {
 	return func(query elastic.Query, nextTime uint64) *elastic.SearchSource {
 		searchSource := elastic.NewSearchSource().
 			Query(query).
-			Size(10000)
+			Size(defaultDocCount)
 		//TerminateAfter(10000)
-		searchSource.Sort("startTime", true)
+		searchSource.Sort(startTimeField, true)
 		//SearchAfter(nextTime)
 		return searchSource
 	}
@@ -166,7 +166,7 @@ func (reader *LogzioSpanReader) FindTraceIDs(ctx context.Context, query *spansto
 	if err != nil {
 		return nil, err
 	}
-	reader.logger.Error(fmt.Sprint(esTraceIDs))
+	reader.logger.Debug(fmt.Sprintf("found traceIDs: %v", esTraceIDs))
 	return convertTraceIDsStringsToModels(esTraceIDs)
 }
 
@@ -175,24 +175,21 @@ func (reader *LogzioSpanReader) getMultiSearchResult(requestBody string) (elasti
 		return elastic.MultiSearchResult{}, errors.New("empty API token, can't perform search")
 	}
 	client := http.Client{}
+	reader.logger.Debug("sending multisearch request to logz.io: %s", requestBody)
 	req, err := http.NewRequest(httpPost, reader.apiURL, strings.NewReader(requestBody))
 	if err != nil {
-		reader.logger.Error("failed to create multiSearch request")
-		return elastic.MultiSearchResult{}, err
+		return elastic.MultiSearchResult{}, errors.Wrap(err, "failed to create multiSearch request")
 	}
 	req.Header.Add(apiTokenHeader, reader.apiToken)
 	resp, err := client.Do(req)
 	if err != nil {
-		reader.logger.Error("failed to execute multiSearch request")
-		return elastic.MultiSearchResult{}, err
+		return elastic.MultiSearchResult{}, errors.Wrap(err, "failed to create multiSearch request")
 	}
 
 	responseBytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		reader.logger.Error("can't read response body")
-		return elastic.MultiSearchResult{}, err
+		return elastic.MultiSearchResult{}, errors.Wrap(err, "can't read response body")
 	}
-	reader.logger.Error(string(responseBytes))
 	if err := resp.Body.Close(); err != nil {
 		reader.logger.Warn("can't close response body, possible memory leak")
 	}
