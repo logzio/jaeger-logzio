@@ -195,6 +195,10 @@ func (reader *LogzioSpanReader) getMultiSearchResult(requestBody string) (elasti
 	}
 	reader.logger.Debug(fmt.Sprintf("got response from logz.io: %s", string(responseBytes)))
 
+	if err := checkErrorResponse(responseBytes); err != nil {
+		return elastic.MultiSearchResult{}, err
+	}
+
 	var multiSearchResult elastic.MultiSearchResult
 	if err := json.Unmarshal(responseBytes, &multiSearchResult); err != nil {
 		return elastic.MultiSearchResult{}, errors.Wrap(err, "failed to parse http response")
@@ -205,4 +209,14 @@ func (reader *LogzioSpanReader) getMultiSearchResult(requestBody string) (elasti
 // GetDependencies returns an array of all the dependencies in a specific time range
 func (*LogzioSpanReader) GetDependencies(endTs time.Time, lookback time.Duration) ([]model.DependencyLink, error) {
 	return nil, nil
+}
+
+func checkErrorResponse (response []byte) error {
+	var respMap map[string]interface{}
+	_ = json.Unmarshal(response, &respMap)
+	_, exist := respMap["errorCode"]
+	if exist {
+		return errors.New(fmt.Sprintf("got error response: %s", string(response)))
+	}
+	return nil
 }
