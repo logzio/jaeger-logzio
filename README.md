@@ -1,18 +1,19 @@
 # jaeger-logzio
 
-A storage integration for Jaeger
+This is the repository that contains Logz.io Storage gRPC plugin for Jaeger.
 
 ## Run as a docker
 
-Run the command below 👇 with the following parameters:
+Run the command below 👇 with the following environment variables:
 
 | Parameter | Description |
 |---|---|
-| ACCOUNTTOKEN | **Required**. Your Logz.io [account token](https://app.logz.io/#/dashboard/settings/manage-accounts) <br> Replace `<<ACCOUNT-TOKEN>>` with the [token](https://app.logz.io/#/dashboard/settings/general) of the account you want to ship to. |
-| LISTENERURL | **Default**: `https://listener.logz.io:8071` <br>  Listener URL and port. Replace `listener.logz.io` with your region's listener host. For more information on finding your account's region, see [Account region](https://docs.logz.io/user-guide/accounts/account-region.html). |
+| ACCOUNTTOKEN | **Required**.<br> Required when using as a collector to ship traces to Logz.io. <br> Replace `<ACCOUNT-TOKEN>` with the [token](https://app.logz.io/#/dashboard/settings/general) of the account you want to ship to. |
+| APITOKEN | **Required**.<br> Required to read back traces from Logz.io. <br> Replace `<API-TOKEN>` with the [API token](https://app.logz.io/#/dashboard/settings/api-tokens) from the account you want to use. |
+| REGION | **Default**: `us` <br> Two-letters region code. Replace `us` with your region's code. For more information on finding your account's region, see [Account region](https://docs.logz.io/user-guide/accounts/account-region.html). |
 
 ```
-docker run -d -e ACCOUNTTOKEN=<<ACCOUNT_TOKEN>> -e LISTENERURL=https://listener.logz.io:8071 -p 5775:5775/udp \
+docker run -d -e ACCOUNTTOKEN=<ACCOUNT_TOKEN> -e APITOKEN=<API-TOKEN> -e LISTENERURL=https://listener.logz.io:8071 -p 5775:5775/udp \
   -p 6831:6831/udp \
   -p 6832:6832/udp \
   -p 5778:5778 \
@@ -45,18 +46,20 @@ Then, build Logz.io binary:
 go build
 ```
 
-Build jaeger all in one binary:
+#### Clone and build jaeger all in one binary:
+
+Follow the [Getting Started](https://github.com/jaegertracing/jaeger/blob/master/CONTRIBUTING.md#getting-started) from the Jaeger's repo.
+Build the Jaeger all-in-one binary:
 
 ```
-git clone https://github.com/jaegertracing/jaeger
-cd https://github.com/jaegertracing/jaeger/cmd/all-in-one
-go build
+go build -tags ui
 ```
 
-Run jaeger with Logz.io as a storage:
+Run Jaeger all-in-one binary with Logz.io storage:
 
 ```
-SPAN_STORAGE_TYPE=grpc-plugin all-in-one --grpc-storage-plugin.binary ~/path/to/jaeger-logzio  --grpc-storage-plugin.configuration-file ~/path/to/config.yaml
+SPAN_STORAGE_TYPE=grpc-plugin  ./cmd/all-in-one/all-in-one --grpc-storage-plugin.binary ~/path/to/jaeger-logzio/jaeger-logzio  --grpc-storage-plugin.configuration-file ~/path/to/jaeger-logzio/config.yaml
 ```
 
-[Run HotROD from source](https://github.com/jaegertracing/jaeger/tree/master/examples/hotrod#run-hotrod-from-source) 
+## Example
+You can try running [HotROD example](https://github.com/jaegertracing/jaeger/tree/master/examples/hotrod#run-hotrod-from-source) to test it out.
