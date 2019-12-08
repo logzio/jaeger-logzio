@@ -2,6 +2,14 @@
 
 This is the repository that contains Logz.io Storage gRPC plugin for Jaeger.
 
+### Limitations
+
+When you use the Jaeger UI to find traces stored in Logz.io, there are a couple limitations.
+For most users, these won't be an issue, but they're still good to know:
+
+* **Lookback** must be 48 hours or less
+* **Limit Results** must be 1000 traces or less
+
 ## Run as a docker
 
 Run the command below 👇 with the following environment variables:
