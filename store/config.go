@@ -40,13 +40,13 @@ func (config *LogzioConfig) validate() error {
 //ParseConfig receives a config file path, parse it and returns logzio span store config
 func ParseConfig(filePath string) (*LogzioConfig, error) {
 	if filePath != "" {
-		logzioConfig := LogzioConfig{}
+		logzioConfig := &LogzioConfig{}
 		yamlFile, err := ioutil.ReadFile(filePath)
 		if err != nil {
 			return nil, err
 		}
 		err = yaml.Unmarshal(yamlFile, &logzioConfig)
-		return nil, err
+		return logzioConfig, err
 	}
 	v := viper.New()
 	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
@@ -55,7 +55,7 @@ func ParseConfig(filePath string) (*LogzioConfig, error) {
 	v.SetDefault(customListenerParam, "")
 	v.AutomaticEnv()
 
-	logzioConfig := LogzioConfig{
+	logzioConfig := &LogzioConfig{
 		Region:            v.GetString(regionParam),
 		AccountToken:      v.GetString(accountTokenParam),
 		APIToken:          v.GetString(apiTokenParam),
@@ -65,7 +65,7 @@ func ParseConfig(filePath string) (*LogzioConfig, error) {
 	if err := logzioConfig.validate(); err != nil {
 		return nil, err
 	}
-	return &logzioConfig, nil
+	return logzioConfig, nil
 }
 
 // ListenerURL returns the constructed listener URL to write spans to
