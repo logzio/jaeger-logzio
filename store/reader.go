@@ -41,6 +41,7 @@ const (
 	logzioMaxAggregationSize = 1000
 	defaultNumTraces         = 100
 	maxSearchWindowHours     = 48
+	singleValueIndex = 0
 )
 
 var (
@@ -201,6 +202,18 @@ func (reader *LogzioSpanReader) getHTTPResponseBytes(request *http.Request) ([]b
 		return nil, err
 	}
 	return responseBytes, nil
+}
+
+func (reader *LogzioSpanReader) getSearchResult(requestBody string) (*elastic.SearchResult, error) {
+	multiSearchResult, err := reader.getMultiSearchResult(requestBody)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(multiSearchResult.Responses) > singleValueIndex {
+		return multiSearchResult.Responses[singleValueIndex], nil
+	}
+	return nil, nil
 }
 
 func (reader *LogzioSpanReader) getMultiSearchResult(requestBody string) (elastic.MultiSearchResult, error) {

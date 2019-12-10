@@ -156,11 +156,10 @@ func (finder *TraceFinder) findTraceIDsStrings(ctx context.Context, traceQuery *
 		return nil, errors.Wrap(err, "can't create search request for trace query")
 	}
 	requestBody = fmt.Sprintf("{}\n%s\n", requestBody)
-	multiSearchResult, err := finder.reader.getMultiSearchResult(requestBody)
+	searchResult,err := finder.reader.getSearchResult(requestBody)
 	if err != nil {
 		return nil, errors.Wrap(err, "Search service failed")
 	}
-	searchResult := multiSearchResult.Responses[0]
 	bucket, found := searchResult.Aggregations.Terms(traceIDAggregation)
 	if !found {
 		return nil, ErrUnableToFindTraceIDAggregation

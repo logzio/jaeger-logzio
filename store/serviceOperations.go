@@ -30,7 +30,7 @@ func NewServiceOperationStorage(reader *LogzioSpanReader) *ServiceOperationStora
 }
 
 func (soStorage *ServiceOperationStorage) getServices(context context.Context) ([]string, error) {
-	return soStorage.getUniqueValues(context, serviceName)
+	return soStorage.getUniqueValues(context, serviceName, nil)
 }
 
 func (soStorage *ServiceOperationStorage) getOperations(context context.Context, service string) ([]string, error) {
@@ -44,7 +44,7 @@ func getAggregation(field string) elastic.Query {
 		Size(logzioMaxAggregationSize)
 }
 
-func (soStorage *ServiceOperationStorage) getUniqueValues(context context.Context, field string, termsQuery ...elastic.Query) ([]string, error) {
+func (soStorage *ServiceOperationStorage) getUniqueValues(context context.Context, field string, termsQuery elastic.Query) ([]string, error) {
 	serviceFilter := getAggregation(field)
 	aggregationString := "distinct_" + field
 
@@ -53,20 +53,19 @@ func (soStorage *ServiceOperationStorage) getUniqueValues(context context.Contex
 		IgnoreUnavailable(true).
 		Aggregation(aggregationString, serviceFilter)
 
-	if len(termsQuery) > 0 {
-		searchRequest = searchRequest.Query(termsQuery[0])
+	if termsQuery != nil {
+		searchRequest = searchRequest.Query(termsQuery)
 	}
 	searchBody, err := searchRequest.Body()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create search service request")
 	}
 	searchBody = fmt.Sprintf("{}\n%s\n", searchBody)
-	multiSearchResult, err := soStorage.reader.getMultiSearchResult(searchBody)
-	if err != nil {
-		return nil, err
-	}
 
-	searchResult := multiSearchResult.Responses[0]
+	searchResult, err := soStorage.reader.getSearchResult(searchBody)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to execute search service request")
+	}
 	if searchResult.Aggregations == nil {
 		return []string{}, nil
 	}
