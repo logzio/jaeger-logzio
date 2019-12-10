@@ -16,12 +16,12 @@ Run the command below 👇 with the following environment variables:
 
 | Parameter | Description |
 |---|---|
-| ACCOUNTTOKEN | **Required**.<br> Required when using as a collector to ship traces to Logz.io. <br> Replace `<ACCOUNT-TOKEN>` with the [token](https://app.logz.io/#/dashboard/settings/general) of the account you want to ship to. |
-| APITOKEN | **Required**.<br> Required to read back traces from Logz.io. <br> Replace `<API-TOKEN>` with the [API token](https://app.logz.io/#/dashboard/settings/api-tokens) from the account you want to use. |
+| ACCOUNT_TOKEN | **Required**.<br> Required when using as a collector to ship traces to Logz.io. <br> Replace `<ACCOUNT-TOKEN>` with the [token](https://app.logz.io/#/dashboard/settings/general) of the account you want to ship to. |
+| API_TOKEN | **Required**.<br> Required to read back traces from Logz.io. <br> Replace `<API-TOKEN>` with the [API token](https://app.logz.io/#/dashboard/settings/api-tokens) from the account you want to use. |
 | REGION | **Default**: `us` <br> Two-letters region code. Replace `us` with your region's code. For more information on finding your account's region, see [Account region](https://docs.logz.io/user-guide/accounts/account-region.html). |
 
 ```
-docker run -d -e ACCOUNTTOKEN=<ACCOUNT_TOKEN> -e APITOKEN=<API-TOKEN> -e LISTENERURL=https://listener.logz.io:8071 -p 5775:5775/udp \
+docker run -d -e ACCOUNT_TOKEN=<ACCOUNT_TOKEN> -e API_TOKEN=<API-TOKEN> -p 5775:5775/udp \
   -p 6831:6831/udp \
   -p 6832:6832/udp \
   -p 5778:5778 \
@@ -34,7 +34,7 @@ logzio/jaeger-logzio:latest
 
 if you want to run the jaeger-logzio with the jaeger collector only, use the following command instead
 ```
-docker run -d -e ACCOUNTTOKEN=<<ACCOUNT_TOKEN>> -e LISTENERURL=https://listener.logz.io:8071 \
+docker run -d -e ACCOUNT_TOKEN=<<ACCOUNT_TOKEN>> -e \
   -p 6831:6831/udp \
   -p 6832:6832/udp \
   -p 5778:5778 \

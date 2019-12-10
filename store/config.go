@@ -12,11 +12,11 @@ import (
 )
 
 const (
-	accountTokenParam   = "accountToken"
-	apiTokenParam       = "apiToken"
-	regionParam         = "region"
-	customListenerParam = "customListener"
-	customAPIParam      = "customAPI"
+	accountTokenParam   = "ACCOUNT_TOKEN"
+	apiTokenParam       = "API_TOKEN"
+	regionParam         = "REGION"
+	customListenerParam = "CUSTOM_LISTENER_HOST"
+	customAPIParam      = "CUSTOM_API"
 	usRegionCode        = "us"
 )
 
@@ -29,8 +29,8 @@ type LogzioConfig struct {
 	CustomAPIURL      string `yaml:"customAPIUrl"`
 }
 
-// Validate logzio config, return error if invalid
-func (config *LogzioConfig) Validate() error {
+// validate logzio config, return error if invalid
+func (config *LogzioConfig) validate() error {
 	if config.AccountToken == "" && config.APIToken == "" {
 		return errors.New("At least one of logz.io account token or api-token has to be valid")
 	}
@@ -38,15 +38,15 @@ func (config *LogzioConfig) Validate() error {
 }
 
 //ParseConfig receives a config file path, parse it and returns logzio span store config
-func ParseConfig(filePath string) (LogzioConfig, error) {
+func ParseConfig(filePath string) (*LogzioConfig, error) {
 	if filePath != "" {
 		logzioConfig := LogzioConfig{}
 		yamlFile, err := ioutil.ReadFile(filePath)
 		if err != nil {
-			return logzioConfig, err
+			return nil, err
 		}
 		err = yaml.Unmarshal(yamlFile, &logzioConfig)
-		return logzioConfig, err
+		return nil, err
 	}
 	v := viper.New()
 	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
@@ -62,7 +62,10 @@ func ParseConfig(filePath string) (LogzioConfig, error) {
 		CustomAPIURL:      v.GetString(customAPIParam),
 		CustomListenerURL: v.GetString(customListenerParam),
 	}
-	return logzioConfig, nil
+	if err := logzioConfig.validate(); err != nil {
+		return nil, err
+	}
+	return &logzioConfig, nil
 }
 
 // ListenerURL returns the constructed listener URL to write spans to
@@ -90,7 +93,7 @@ func (config *LogzioConfig) regionCode() string {
 }
 
 func (config *LogzioConfig) String() string {
-	desc := fmt.Sprintf("account token: %v \n api token: %v \n listener url: %v", censorString(config.AccountToken, 4), censorString(config.APIToken, 9), config.ListenerURL())
+	desc := fmt.Sprintf("account token: %v \n api token: %v \n listener url: %v \n api url: %s", censorString(config.AccountToken, 4), censorString(config.APIToken, 9), config.ListenerURL(), config.APIURL())
 	return desc
 }
 

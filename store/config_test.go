@@ -20,20 +20,20 @@ func TestValidate(tester *testing.T) {
 		APIToken:     "",
 		Region:       "",
 	}
-	err := config.Validate()
+	err := config.validate()
 	if err == nil {
 		tester.Error("validation failed, empty account token and api token should produce error")
 	}
 
 	config.APIToken = testAccountToken
-	err = config.Validate()
+	err = config.validate()
 	if err != nil {
 		tester.Error("validation failed, one of api token or account token can be empty")
 	}
 
 	config.AccountToken = testAccountToken
 	config.APIToken = ""
-	err = config.Validate()
+	err = config.validate()
 	if err != nil {
 		tester.Error("validation failed, one of api token or account token can be empty")
 	}

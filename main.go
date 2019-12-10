@@ -30,13 +30,8 @@ func main() {
 		os.Exit(0)
 	}
 
-	err = logzioConfig.Validate()
-	if err != nil {
-		logger.Error(err.Error())
-		os.Exit(0)
-	}
 	logger.Info(logzioConfig.String())
-	logzioStore := store.NewLogzioStore(logzioConfig, logger)
+	logzioStore := store.NewLogzioStore(*logzioConfig, logger)
 	grpc.Serve(logzioStore)
 	logzioStore.Close()
 }
