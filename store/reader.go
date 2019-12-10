@@ -87,6 +87,7 @@ func NewLogzioSpanReader(config LogzioConfig, logger hclog.Logger) *LogzioSpanRe
 		apiToken: config.APIToken,
 		apiURL:   config.APIURL(),
 		sourceFn: getSourceFn(),
+		client:	  &http.Client{},
 	}
 	reader.serviceOperationStorage = NewServiceOperationStorage(reader)
 	reader.traceFinder = NewTraceFinder(reader)
@@ -122,14 +123,14 @@ func (reader *LogzioSpanReader) GetTrace(ctx context.Context, traceID model.Trac
 	return traces[0], nil
 }
 
-// GetServices returns an array of all the service named that are being monitored
+// GetServices returns an array of all the service names that are being monitored
 func (reader *LogzioSpanReader) GetServices(ctx context.Context) ([]string, error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "GetServices")
 	defer span.Finish()
 	return reader.serviceOperationStorage.getServices(ctx)
 }
 
-// GetOperations returns an array of all the operation a specific service performed
+// GetOperations returns an array of all the operations a specific service performed
 func (reader *LogzioSpanReader) GetOperations(ctx context.Context, service string) ([]string, error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "GetOperations")
 	defer span.Finish()
@@ -141,7 +142,8 @@ func (reader *LogzioSpanReader) FindTraces(ctx context.Context, query *spanstore
 	span, ctx := opentracing.StartSpanFromContext(ctx, "FindTraces")
 	defer span.Finish()
 
-	if query.StartTimeMax.Sub(query.StartTimeMin).Hours() > maxSearchWindowHours {
+	spansMaxMinTimeDifferenceHours := query.StartTimeMax.Sub(query.StartTimeMin).Hours()
+	if spansMaxMinTimeDifferenceHours > maxSearchWindowHours {
 		query.StartTimeMin = query.StartTimeMax.Add(-time.Hour * maxSearchWindowHours)
 	}
 	uniqueTraceIDs, err := reader.FindTraceIDs(ctx, query)
@@ -151,7 +153,7 @@ func (reader *LogzioSpanReader) FindTraces(ctx context.Context, query *spanstore
 	return reader.traceFinder.multiRead(ctx, uniqueTraceIDs, query.StartTimeMin, query.StartTimeMax)
 }
 
-// FindTraceIDs returns an array of traceIds by a search query
+// FindTraceIDs retrieve traceIDs that match the traceQuery
 func (reader *LogzioSpanReader) FindTraceIDs(ctx context.Context, query *spanstore.TraceQueryParameters) ([]model.TraceID, error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "FindTraceIDs")
 	defer span.Finish()
@@ -170,37 +172,52 @@ func (reader *LogzioSpanReader) FindTraceIDs(ctx context.Context, query *spansto
 	return convertTraceIDsStringsToModels(esTraceIDs)
 }
 
-func (reader *LogzioSpanReader) getMultiSearchResult(requestBody string) (elastic.MultiSearchResult, error) {
-	if reader.apiToken == "" {
-		return elastic.MultiSearchResult{}, errors.New("empty API token, can't perform search")
-	}
-	client := http.Client{}
-	reader.logger.Debug("sending multisearch request to logz.io: %s", requestBody)
+func (reader *LogzioSpanReader) getHTTPRequest(requestBody string) (*http.Request, error) {
+	reader.logger.Debug("creating multisearch request: %s", requestBody)
 	req, err := http.NewRequest(httpPost, reader.apiURL, strings.NewReader(requestBody))
 	if err != nil {
-		return elastic.MultiSearchResult{}, errors.Wrap(err, "failed to create multiSearch request")
+		return nil, errors.Wrap(err, "failed to create multiSearch request")
 	}
 	req.Header.Add(apiTokenHeader, reader.apiToken)
-	resp, err := client.Do(req)
+	return req, nil
+}
+
+func (reader *LogzioSpanReader) getHTTPResponseBytes(request *http.Request) ([]byte, error) {
+	resp, err := reader.client.Do(request)
 	if err != nil {
-		return elastic.MultiSearchResult{}, errors.Wrap(err, "failed to create multiSearch request")
+		return nil, errors.Wrap(err, "failed perform multiSearch request")
 	}
 
 	responseBytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return elastic.MultiSearchResult{}, errors.Wrap(err, "can't read response body")
+		return nil, errors.Wrap(err, "can't read response body")
 	}
-	if err := resp.Body.Close(); err != nil {
+	if err = resp.Body.Close(); err != nil {
 		reader.logger.Warn("can't close response body, possible memory leak")
 	}
 	reader.logger.Debug(fmt.Sprintf("got response from logz.io: %s", string(responseBytes)))
 
-	if err := checkErrorResponse(responseBytes); err != nil {
+	if err = checkErrorResponse(responseBytes); err != nil {
+		return nil, err
+	}
+	return responseBytes, nil
+}
+
+func (reader *LogzioSpanReader) getMultiSearchResult(requestBody string) (elastic.MultiSearchResult, error) {
+	if reader.apiToken == "" {
+		return elastic.MultiSearchResult{}, errors.New("empty API token, can't perform search")
+	}
+	req, err := reader.getHTTPRequest(requestBody)
+	if err != nil {
+		return elastic.MultiSearchResult{}, err
+	}
+	responseBytes, err := reader.getHTTPResponseBytes(req)
+	if err != nil {
 		return elastic.MultiSearchResult{}, err
 	}
 
 	var multiSearchResult elastic.MultiSearchResult
-	if err := json.Unmarshal(responseBytes, &multiSearchResult); err != nil {
+	if err = json.Unmarshal(responseBytes, &multiSearchResult); err != nil {
 		return elastic.MultiSearchResult{}, errors.Wrap(err, "failed to parse http response")
 	}
 	return multiSearchResult, err
