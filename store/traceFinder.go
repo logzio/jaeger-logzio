@@ -37,7 +37,7 @@ func NewTraceFinder(reader *LogzioSpanReader) TraceFinder {
 func (finder *TraceFinder) traceIDsMultiSearchRequestBody(traceIDs []model.TraceID, nextTime uint64, endTime time.Time, searchAfterTime map[model.TraceID]uint64) string {
 	multiSearchBody := ""
 	for _, traceID := range traceIDs {
-		finder.logger.Debug(fmt.Sprintf("processing trace %s", traceID.String()))
+		finder.logger.Error(fmt.Sprintf("processing trace %s", traceID.String()))
 		traceIDTerm := elastic.NewTermQuery(traceIDField, traceID.String())
 		rangeQuery := elastic.NewRangeQuery(startTimeField).Gte(nextTime).Lte(model.TimeAsEpochMicroseconds(endTime))
 		query := elastic.NewBoolQuery().Filter(traceIDTerm, rangeQuery)
@@ -156,7 +156,7 @@ func (finder *TraceFinder) findTraceIDsStrings(ctx context.Context, traceQuery *
 		return nil, errors.Wrap(err, "can't create search request for trace query")
 	}
 	requestBody = fmt.Sprintf("{}\n%s\n", requestBody)
-	searchResult,err := finder.reader.getSearchResult(requestBody)
+	searchResult, err := finder.reader.getSearchResult(requestBody)
 	if err != nil {
 		return nil, errors.Wrap(err, "Search service failed")
 	}

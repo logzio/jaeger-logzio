@@ -41,7 +41,7 @@ const (
 	logzioMaxAggregationSize = 1000
 	defaultNumTraces         = 100
 	maxSearchWindowHours     = 48
-	singleValueIndex = 0
+	singleValueIndex         = 0
 )
 
 var (
@@ -88,7 +88,7 @@ func NewLogzioSpanReader(config LogzioConfig, logger hclog.Logger) *LogzioSpanRe
 		apiToken: config.APIToken,
 		apiURL:   config.APIURL(),
 		sourceFn: getSourceFn(),
-		client:	  &http.Client{},
+		client:   &http.Client{},
 	}
 	reader.serviceOperationStorage = NewServiceOperationStorage(reader)
 	reader.traceFinder = NewTraceFinder(reader)
@@ -121,7 +121,8 @@ func (reader *LogzioSpanReader) GetTrace(ctx context.Context, traceID model.Trac
 	if len(traces) == 0 {
 		return nil, spanstore.ErrTraceNotFound
 	}
-	return traces[0], nil
+	//here we are using multiread to get a single trace. since multiread returns an array of result, we only want the first (and only) result
+	return traces[singleValueIndex], nil
 }
 
 // GetServices returns an array of all the service names that are being monitored
@@ -169,12 +170,12 @@ func (reader *LogzioSpanReader) FindTraceIDs(ctx context.Context, query *spansto
 	if err != nil {
 		return nil, err
 	}
-	reader.logger.Debug(fmt.Sprintf("found traceIDs: %v", esTraceIDs))
+	reader.logger.Error(fmt.Sprintf("found traceIDs: %v", esTraceIDs))
 	return convertTraceIDsStringsToModels(esTraceIDs)
 }
 
 func (reader *LogzioSpanReader) getHTTPRequest(requestBody string) (*http.Request, error) {
-	reader.logger.Debug("creating multisearch request: %s", requestBody)
+	reader.logger.Error("creating multisearch request: %s", requestBody)
 	req, err := http.NewRequest(httpPost, reader.apiURL, strings.NewReader(requestBody))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create multiSearch request")
@@ -196,7 +197,7 @@ func (reader *LogzioSpanReader) getHTTPResponseBytes(request *http.Request) ([]b
 	if err = resp.Body.Close(); err != nil {
 		reader.logger.Warn("can't close response body, possible memory leak")
 	}
-	reader.logger.Debug(fmt.Sprintf("got response from logz.io: %s", string(responseBytes)))
+	reader.logger.Error(fmt.Sprintf("got response from logz.io: %s", string(responseBytes)))
 
 	if err = checkErrorResponse(responseBytes); err != nil {
 		return nil, err
@@ -241,7 +242,7 @@ func (*LogzioSpanReader) GetDependencies(endTs time.Time, lookback time.Duration
 	return nil, nil
 }
 
-func checkErrorResponse (response []byte) error {
+func checkErrorResponse(response []byte) error {
 	var respMap map[string]interface{}
 	_ = json.Unmarshal(response, &respMap)
 	_, exist := respMap["errorCode"]
