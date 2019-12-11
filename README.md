@@ -21,20 +21,20 @@ Run the command below 👇 with the following environment variables:
 | REGION | **Default**: `us` <br> Two-letters region code. Replace `us` with your region's code. For more information on finding your account's region, see [Account region](https://docs.logz.io/user-guide/accounts/account-region.html). |
 
 ```
-docker run -d -e ACCOUNT_TOKEN=<ACCOUNT_TOKEN> -e API_TOKEN=<API-TOKEN> -p 5775:5775/udp \
+docker run -d --name=jaeger-logzio -e ACCOUNT_TOKEN=<ACCOUNT_TOKEN> -e API_TOKEN=<API-TOKEN> -p 5775:5775/udp \
   -p 6831:6831/udp \
   -p 6832:6832/udp \
   -p 5778:5778 \
   -p 16686:16686 \
   -p 14268:14268 \
-  -p 9411:9411 jaeger-logzio
+  -p 9411:9411 \
 logzio/jaeger-logzio:latest
 
 ```
 
 if you want to run the jaeger-logzio with the jaeger collector only, use the following command instead
 ```
-docker run -d -e ACCOUNT_TOKEN=<<ACCOUNT_TOKEN>> -e \
+docker run -d --name=jaeger-logzio -e ACCOUNT_TOKEN=<<ACCOUNT_TOKEN>> -e \
   -p 6831:6831/udp \
   -p 6832:6832/udp \
   -p 5778:5778 \
@@ -70,4 +70,16 @@ SPAN_STORAGE_TYPE=grpc-plugin  ./cmd/all-in-one/all-in-one --grpc-storage-plugin
 ```
 
 ## Example
-You can try running [HotROD example](https://github.com/jaegertracing/jaeger/tree/master/examples/hotrod#run-hotrod-from-source) to test it out.
+HotROD (Rides on Demand) is a demo application that consists of several microservices and illustrates the use of the OpenTracing API.
+It can be run standalone, but requires Jaeger backend to view the traces.
+You can try and run to view sample traces:
+```
+docker run --rm -it \
+  --link jaeger-logzio \
+  -p8080-8083:8080-8083 \
+  -e JAEGER_AGENT_HOST="jaeger-logzio" \
+  jaegertracing/example-hotrod:1.9 \
+  all
+```
+
+Then navigate to http://localhost:8080 .
