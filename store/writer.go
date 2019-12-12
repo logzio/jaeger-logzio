@@ -28,7 +28,7 @@ func (writer *loggerWriter) Write(msgBytes []byte) (n int, err error) {
 	if strings.Contains(strings.ToLower(msgString), "error") {
 		writer.logger.Error(msgString)
 	} else {
-		writer.logger.Error(msgString)
+		writer.logger.Debug(msgString)
 	}
 	return len(msgBytes), nil
 }

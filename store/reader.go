@@ -170,12 +170,12 @@ func (reader *LogzioSpanReader) FindTraceIDs(ctx context.Context, query *spansto
 	if err != nil {
 		return nil, err
 	}
-	reader.logger.Error(fmt.Sprintf("found traceIDs: %v", esTraceIDs))
+	reader.logger.Debug(fmt.Sprintf("found traceIDs: %v", esTraceIDs))
 	return convertTraceIDsStringsToModels(esTraceIDs)
 }
 
 func (reader *LogzioSpanReader) getHTTPRequest(requestBody string) (*http.Request, error) {
-	reader.logger.Error("creating multisearch request: %s", requestBody)
+	reader.logger.Debug("creating multisearch request: %s", requestBody)
 	req, err := http.NewRequest(httpPost, reader.apiURL, strings.NewReader(requestBody))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create multiSearch request")
@@ -197,7 +197,7 @@ func (reader *LogzioSpanReader) getHTTPResponseBytes(request *http.Request) ([]b
 	if err = resp.Body.Close(); err != nil {
 		reader.logger.Warn("can't close response body, possible memory leak")
 	}
-	reader.logger.Error(fmt.Sprintf("got response from logz.io: %s", string(responseBytes)))
+	reader.logger.Debug(fmt.Sprintf("got response from logz.io: %s", string(responseBytes)))
 
 	if err = checkErrorResponse(responseBytes); err != nil {
 		return nil, err
