@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -56,32 +57,20 @@ func checkRecordedRequestAndGetBody(tester *testing.T, requestCount int) string 
 func TestGetTrace(tester *testing.T) {
 	_, _ = reader.GetTrace(context.Background(), model.TraceID{Low: 1, High: 0})
 	reqBody := checkRecordedRequestAndGetBody(tester, 1)
-
-	if !strings.Contains(reqBody, "\"traceID\":\"1\"") {
-		tester.Errorf("trace id incorrect or not exist")
-	}
+	assert.True(tester, strings.Contains(reqBody, "\"traceID\":\"1\""), "trace id incorrect or not exist")
 }
 
 func TestGetServices(tester *testing.T) {
 	_, _ = reader.GetServices(context.Background())
 	reqBody := checkRecordedRequestAndGetBody(tester, 1)
-
-	if !strings.Contains(reqBody, "\"field\":\"serviceName\"") {
-		tester.Errorf("serviceName field is not in request")
-	}
+	assert.True(tester, strings.Contains(reqBody, "\"field\":\"serviceName\""), "serviceName field is not in request")
 }
 
 func TestGetOperations(tester *testing.T) {
 	_, _ = reader.GetOperations(context.Background(), testService)
 	reqBody := checkRecordedRequestAndGetBody(tester, 1)
-
-	if !strings.Contains(reqBody, "\"field\":\"operationName\"") {
-		tester.Errorf("operationName field is not in request")
-	}
-
-	if !strings.Contains(reqBody, fmt.Sprintf("{\"term\":{\"serviceName\":\"%s\"}}", testService)) {
-		tester.Errorf("service filter is incorrect or not exist")
-	}
+	assert.True(tester, strings.Contains(reqBody, "\"field\":\"operationName\""), "operationName field is not in request")
+	assert.True(tester, strings.Contains(reqBody, fmt.Sprintf("{\"term\":{\"serviceName\":\"%s\"}}", testService)), "service filter is incorrect or not exist")
 }
 
 func TestFindTraces(tester *testing.T) {
@@ -96,15 +85,14 @@ func TestFindTraces(tester *testing.T) {
 	_, _ = reader.FindTraces(context.Background(), &query)
 	reqBody := checkRecordedRequestAndGetBody(tester, 2)
 
-	if !strings.Contains(reqBody, fmt.Sprintf("{\"range\":{\"startTime\":{\"from\":%d,\"include_lower\":true,\"include_upper\":true,\"to\":%d}}}", minTime, maxTime)) {
-		tester.Errorf("request time range is incorrect or not exist")
-	}
-	if !strings.Contains(reqBody, "{\"term\":{\"traceID\":\"42\"}") {
-		tester.Errorf("missing traceID term for trace id 42")
-	}
-	if !strings.Contains(reqBody, "{\"term\":{\"traceID\":\"314\"}") {
-		tester.Errorf("missing traceID term for trace id 314")
-	}
+	assert.True(tester,
+		strings.Contains(
+			reqBody,
+			fmt.Sprintf("{\"range\":{\"startTime\":{\"from\":%d,\"include_lower\":true,\"include_upper\":true,\"to\":%d}}}", minTime, maxTime)),
+		"request time range is incorrect or not exist")
+
+	assert.True(tester, strings.Contains(reqBody, "{\"term\":{\"traceID\":\"42\"}"), "missing traceID term for trace id 42")
+	assert.True(tester, strings.Contains(reqBody, "{\"term\":{\"traceID\":\"314\"}"), "missing traceID term for trace id 314")
 }
 
 func TestFindTraceIDs(tester *testing.T) {
@@ -119,13 +107,17 @@ func TestFindTraceIDs(tester *testing.T) {
 	_, _ = reader.FindTraceIDs(context.Background(), &query)
 
 	reqBody := checkRecordedRequestAndGetBody(tester, 1)
-	if !strings.Contains(reqBody, fmt.Sprintf("{\"range\":{\"startTime\":{\"from\":%d,\"include_lower\":true,\"include_upper\":true,\"to\":%d}}}", minTime, maxTime)) {
-		tester.Errorf("request time range is incorrect or not exist")
-	}
-	if !strings.Contains(reqBody, fmt.Sprintf("{\"match\":{\"process.serviceName\":{\"query\":\"%s\"}}}", testService)) {
-		tester.Errorf("service filter is incorrect or not exist")
-	}
-	if !strings.Contains(reqBody, fmt.Sprintf("{\"match\":{\"operationName\":{\"query\":\"%s\"}}}", testOperation)) {
-		tester.Errorf("operation filter is incorrect or not exist")
-	}
+	assert.True(tester,
+		strings.Contains(
+			reqBody,
+			fmt.Sprintf("{\"range\":{\"startTime\":{\"from\":%d,\"include_lower\":true,\"include_upper\":true,\"to\":%d}}}", minTime, maxTime)),
+		"request time range is incorrect or not exist")
+
+	assert.True(tester, strings.Contains(reqBody,
+		fmt.Sprintf("{\"match\":{\"process.serviceName\":{\"query\":\"%s\"}}}", testService)),
+		"service filter is incorrect or not exist")
+
+	assert.True(tester,
+		strings.Contains(reqBody, fmt.Sprintf("{\"match\":{\"operationName\":{\"query\":\"%s\"}}}", testOperation)),
+		"operation filter is incorrect or not exist")
 }

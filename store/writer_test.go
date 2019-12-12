@@ -2,6 +2,7 @@ package store
 
 import (
 	"encoding/json"
+	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"jaeger-logzio/store/objects"
 	"net/http"
@@ -44,25 +45,19 @@ func TestWriteSpan(tester *testing.T) {
 	}
 
 	writer, _ := NewLogzioSpanWriter(LogzioConfig{AccountToken: testAccountToken, CustomListenerURL: server.URL}, logger)
-	err := writer.WriteSpan(span)
-	if err != nil {
-		tester.Errorf("failed write span test: %s", err.Error())
-	}
+	assert.NoError(tester, writer.WriteSpan(span))
+
 	time.Sleep(time.Second * 6)
 	requests := strings.Split(string(recordedRequests), "\n")
 	var logzioSpan objects.LogzioSpan
-	if err := json.Unmarshal([]byte(requests[0]), &logzioSpan); err != nil {
-		tester.Errorf("failed to parse recorded request to logzio span: %s", err.Error())
-	}
-	if logzioSpan.OperationName != testOperation || logzioSpan.Process.ServiceName != testService {
-		tester.Errorf("wrong span! got %s", requests[0])
-	}
+	assert.NoError(tester, json.Unmarshal([]byte(requests[0]), &logzioSpan))
+
+	assert.Equal(tester, logzioSpan.OperationName, testOperation)
+	assert.Equal(tester, logzioSpan.Process.ServiceName, testService)
 
 	var logzioService objects.LogzioService
-	if err := json.Unmarshal([]byte(requests[1]), &logzioService); err != nil {
-		tester.Errorf("failed to parse recorded request to logzio span: %s", err.Error())
-	}
-	if logzioService.OperationName != testOperation || logzioService.ServiceName != testService {
-		tester.Errorf("wrong span! got %s", requests[1])
-	}
+	assert.NoError(tester, json.Unmarshal([]byte(requests[1]), &logzioService))
+
+	assert.Equal(tester, logzioService.OperationName, testOperation)
+	assert.Equal(tester, logzioService.ServiceName, testService)
 }
