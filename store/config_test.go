@@ -1,8 +1,9 @@
 package store
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 const (
@@ -25,11 +26,11 @@ func TestValidate(tester *testing.T) {
 	assert.Error(tester, config.validate(logger), "validation failed, empty account token and api token should produce error")
 
 	config.APIToken = testAccountToken
-	assert.NoError(tester, config.validate(logger),"validation failed, one of api token or account token can be empty")
+	assert.NoError(tester, config.validate(logger), "validation failed, one of api token or account token can be empty")
 
 	config.AccountToken = testAccountToken
 	config.APIToken = ""
-	assert.NoError(tester, config.validate(logger),"validation failed, one of api token or account token can be empty")
+	assert.NoError(tester, config.validate(logger), "validation failed, one of api token or account token can be empty")
 
 }
 
@@ -44,11 +45,11 @@ func TestRegion(tester *testing.T) {
 	assert.Equal(tester, config.APIURL(), apiURL, "api url incorrect")
 
 	config.Region = "us"
-	assert.Equal(tester ,config.ListenerURL(), listenerURL, "listener url incorrect")
+	assert.Equal(tester, config.ListenerURL(), listenerURL, "listener url incorrect")
 	assert.Equal(tester, config.APIURL(), apiURL, "api url incorrect")
 
 	config.Region = "eu"
-	assert.Equal(tester ,config.ListenerURL(), listenerURLEu, "listener url incorrect")
+	assert.Equal(tester, config.ListenerURL(), listenerURLEu, "listener url incorrect")
 	assert.Equal(tester, config.APIURL(), apiURLEu, "api url incorrect")
 }
 

@@ -2,7 +2,6 @@ package store
 
 import (
 	"encoding/json"
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"jaeger-logzio/store/objects"
 	"net/http"
@@ -10,6 +9,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 
 	"github.com/hashicorp/go-hclog"
 	"github.com/jaegertracing/jaeger/model"
