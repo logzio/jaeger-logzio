@@ -23,6 +23,8 @@ If you want to run jaeger-logzio all-in-one (logz.io storage, Jaeger agent, coll
 | ACCOUNT_TOKEN | **Required**.<br> Required when using as a collector to ship traces to Logz.io. <br> Replace `<ACCOUNT-TOKEN>` with the [token](https://app.logz.io/#/dashboard/settings/general) of the account you want to ship to. |
 | API_TOKEN | **Required**.<br> Required to read back traces from Logz.io. <br> Replace `<API-TOKEN>` with the [API token](https://app.logz.io/#/dashboard/settings/api-tokens) from the account you want to use. |
 | REGION | **Default**: `us` <br> Two-letters region code. Replace `us` with your region's code. For more information on finding your account's region, see [Account region](https://docs.logz.io/user-guide/accounts/account-region.html). |
+| CUSTOM_LISTENER_URL | Use this to set a custom listener URL (e.g http://localhost:9200). This config will override the region variable.|
+| CUSTOM_API | Use this to set a api URL (e.g http://localhost:9200/_msearch). This config will override the region variable.|
 
 ```
 docker run -d -e ACCOUNT_TOKEN=<<ACCOUNT_TOKEN>> -e API_TOKEN=<<API_TOKEN>> \
