@@ -24,7 +24,7 @@ func main() {
 	flag.StringVar(&configPath, "config", "", "The absolute path to the logz.io plugin's configuration file")
 	flag.Parse()
 
-	logzioConfig, err := store.ParseConfig(configPath)
+	logzioConfig, err := store.ParseConfig(configPath, logger)
 	if err != nil {
 		logger.Error("can't parse config: ", err.Error())
 		os.Exit(0)

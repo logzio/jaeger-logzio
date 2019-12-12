@@ -2,6 +2,7 @@ package store
 
 import (
 	"fmt"
+	"github.com/hashicorp/go-hclog"
 	"io/ioutil"
 	"strings"
 
@@ -15,7 +16,7 @@ const (
 	accountTokenParam   = "ACCOUNT_TOKEN"
 	apiTokenParam       = "API_TOKEN"
 	regionParam         = "REGION"
-	customListenerParam = "CUSTOM_LISTENER_HOST"
+	customListenerParam = "CUSTOM_LISTENER_URL"
 	customAPIParam      = "CUSTOM_API"
 	usRegionCode        = "us"
 )
@@ -30,39 +31,47 @@ type LogzioConfig struct {
 }
 
 // validate logzio config, return error if invalid
-func (config *LogzioConfig) validate() error {
+func (config *LogzioConfig) validate(logger hclog.Logger) error {
 	if config.AccountToken == "" && config.APIToken == "" {
 		return errors.New("At least one of logz.io account token or api-token has to be valid")
+	}
+	if config.APIToken == "" {
+		logger.Warn("No api token found, can't create span reader")
+	}
+	if config.AccountToken == "" {
+		logger.Warn("No account token found, spans will not be saved")
 	}
 	return nil
 }
 
 //ParseConfig receives a config file path, parse it and returns logzio span store config
-func ParseConfig(filePath string) (*LogzioConfig, error) {
+func ParseConfig(filePath string, logger hclog.Logger) (*LogzioConfig, error) {
+	var logzioConfig *LogzioConfig
 	if filePath != "" {
-		logzioConfig := &LogzioConfig{}
+		logzioConfig = &LogzioConfig{}
 		yamlFile, err := ioutil.ReadFile(filePath)
 		if err != nil {
 			return nil, err
 		}
 		err = yaml.Unmarshal(yamlFile, &logzioConfig)
-		return logzioConfig, err
-	}
-	v := viper.New()
-	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-	v.SetDefault(regionParam, "")
-	v.SetDefault(customAPIParam, "")
-	v.SetDefault(customListenerParam, "")
-	v.AutomaticEnv()
+	} else {
+		v := viper.New()
+		v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+		v.SetDefault(regionParam, "")
+		v.SetDefault(customAPIParam, "")
+		v.SetDefault(customListenerParam, "")
+		v.AutomaticEnv()
 
-	logzioConfig := &LogzioConfig{
-		Region:            v.GetString(regionParam),
-		AccountToken:      v.GetString(accountTokenParam),
-		APIToken:          v.GetString(apiTokenParam),
-		CustomAPIURL:      v.GetString(customAPIParam),
-		CustomListenerURL: v.GetString(customListenerParam),
+		logzioConfig = &LogzioConfig{
+			Region:            v.GetString(regionParam),
+			AccountToken:      v.GetString(accountTokenParam),
+			APIToken:          v.GetString(apiTokenParam),
+			CustomAPIURL:      v.GetString(customAPIParam),
+			CustomListenerURL: v.GetString(customListenerParam),
+		}
 	}
-	if err := logzioConfig.validate(); err != nil {
+
+	if err := logzioConfig.validate(logger); err != nil {
 		return nil, err
 	}
 	return logzioConfig, nil

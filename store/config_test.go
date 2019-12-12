@@ -20,20 +20,20 @@ func TestValidate(tester *testing.T) {
 		APIToken:     "",
 		Region:       "",
 	}
-	err := config.validate()
+	err := config.validate(logger)
 	if err == nil {
 		tester.Error("validation failed, empty account token and api token should produce error")
 	}
 
 	config.APIToken = testAccountToken
-	err = config.validate()
+	err = config.validate(logger)
 	if err != nil {
 		tester.Error("validation failed, one of api token or account token can be empty")
 	}
 
 	config.AccountToken = testAccountToken
 	config.APIToken = ""
-	err = config.validate()
+	err = config.validate(logger)
 	if err != nil {
 		tester.Error("validation failed, one of api token or account token can be empty")
 	}
@@ -72,7 +72,7 @@ func TestRegion(tester *testing.T) {
 }
 
 func TestParseConfig(tester *testing.T) {
-	config, err := ParseConfig("fixtures/testConfig.yaml")
+	config, err := ParseConfig("fixtures/testConfig.yaml", logger)
 	if err != nil {
 		tester.Errorf("error parsing config file: %s", err.Error())
 		return
