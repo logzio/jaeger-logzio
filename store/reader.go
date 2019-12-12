@@ -88,7 +88,11 @@ func NewLogzioSpanReader(config LogzioConfig, logger hclog.Logger) *LogzioSpanRe
 		apiToken: config.APIToken,
 		apiURL:   config.APIURL(),
 		sourceFn: getSourceFn(),
-		client:   &http.Client{},
+		client:   &http.Client{
+			Transport: &http.Transport{
+				Proxy:           http.ProxyFromEnvironment,
+			},
+		},
 	}
 	reader.serviceOperationStorage = NewServiceOperationStorage(reader)
 	reader.traceFinder = NewTraceFinder(reader)

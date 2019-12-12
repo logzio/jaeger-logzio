@@ -2,9 +2,10 @@ package store
 
 import (
 	"fmt"
-	"github.com/hashicorp/go-hclog"
 	"io/ioutil"
 	"strings"
+
+	"github.com/hashicorp/go-hclog"
 
 	"github.com/spf13/viper"
 
