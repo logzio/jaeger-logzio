@@ -40,7 +40,7 @@ const (
 	defaultDocCount          = 10000 // the default elasticsearch allowed limit
 	logzioMaxAggregationSize = 1000
 	defaultNumTraces         = 100
-	maxSearchWindowHours     = 48
+	maxSearchWindowHours     = 72
 	singleValueIndex         = 0
 )
 
@@ -201,7 +201,7 @@ func (reader *LogzioSpanReader) getHTTPResponseBytes(request *http.Request) ([]b
 	if err = resp.Body.Close(); err != nil {
 		reader.logger.Warn("can't close response body, possible memory leak")
 	}
-	reader.logger.Debug(fmt.Sprintf("got response from logz.io: %s", string(responseBytes)))
+	reader.logger.Trace(fmt.Sprintf("got response from logz.io: %s", string(responseBytes)))
 
 	if err = checkErrorResponse(responseBytes); err != nil {
 		return nil, err
@@ -209,6 +209,7 @@ func (reader *LogzioSpanReader) getHTTPResponseBytes(request *http.Request) ([]b
 	return responseBytes, nil
 }
 
+//this is kink of a hack function, we use multisearch to perform a single search
 func (reader *LogzioSpanReader) getSearchResult(requestBody string) (*elastic.SearchResult, error) {
 	multiSearchResult, err := reader.getMultiSearchResult(requestBody)
 	if err != nil {
