@@ -10,12 +10,28 @@
   version = "1.0.0"
 
 [[projects]]
+  digest = "1:6062abf6317d3d6963496e01e22264a2e8a7e3b35e2917aa00ed3d182f569be6"
+  name = "github.com/avast/retry-go"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "f9a5f3752008752cd4f31f9c0c4dc60dec4583e5"
+  version = "v2.4.3"
+
+[[projects]]
   digest = "1:2734f64badcd6ff46a23ef1864621a0c42b694c91383dc18c6b375bfe1fe9984"
   name = "github.com/beeker1121/goque"
   packages = ["."]
   pruneopts = "UT"
   revision = "e1e63ca63c14b41209e160f54c8e7669564eacc4"
   version = "v2.0.1"
+
+[[projects]]
+  digest = "1:ffe9824d294da03b391f44e1ae8281281b4afc1bdaa9588c9097785e3af10cec"
+  name = "github.com/davecgh/go-spew"
+  packages = ["spew"]
+  pruneopts = "UT"
+  revision = "8991bc29aa16c548c550c7ff78260e27b9ab7c73"
+  version = "v1.1.1"
 
 [[projects]]
   digest = "1:abeb38ade3f32a92943e5be54f55ed6d6e3b6602761d74b4aab4c9dd45c18abd"
@@ -126,12 +142,11 @@
   revision = "2f1d1f20f75d5404f53b9edf6b53ed5505508675"
 
 [[projects]]
-  digest = "1:b9a37fe3dcc0f175e2862876da55dc7a378d1a70803d00d542e0ce4c21b5b9ff"
+  digest = "1:92bedfcf491a04f49be18fcab9b4a52f16159239651715832acef61493b39109"
   name = "github.com/jaegertracing/jaeger"
   packages = [
     "model",
     "pkg/cache",
-    "pkg/es",
     "pkg/multierror",
     "plugin/storage/es/spanstore/dbmodel",
     "plugin/storage/grpc",
@@ -239,6 +254,14 @@
   version = "v0.8.1"
 
 [[projects]]
+  digest = "1:0028cb19b2e4c3112225cd871870f2d9cf49b9b4276531f03438a88e94be86fe"
+  name = "github.com/pmezard/go-difflib"
+  packages = ["difflib"]
+  pruneopts = "UT"
+  revision = "792786c7400a136282c1664665ae0a8db921c6c2"
+  version = "v1.0.0"
+
+[[projects]]
   digest = "1:b95189af9471960833fccd39aca2fe1c444b50cfb8c728b985f40fa594d0b36a"
   name = "github.com/shirou/gopsutil"
   packages = [
@@ -290,6 +313,14 @@
   packages = ["."]
   pruneopts = "UT"
   revision = "b5bf975e5823809fb22c7644d008757f78a4259e"
+  version = "v1.4.0"
+
+[[projects]]
+  digest = "1:8548c309c65a85933a625be5e7d52b6ac927ca30c56869fae58123b8a77a75e1"
+  name = "github.com/stretchr/testify"
+  packages = ["assert"]
+  pruneopts = "UT"
+  revision = "221dbe5ed46703ee255b1da0dec05086f5035f62"
   version = "v1.4.0"
 
 [[projects]]
@@ -467,10 +498,10 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/avast/retry-go",
     "github.com/hashicorp/go-hclog",
     "github.com/jaegertracing/jaeger/model",
     "github.com/jaegertracing/jaeger/pkg/cache",
-    "github.com/jaegertracing/jaeger/pkg/es",
     "github.com/jaegertracing/jaeger/plugin/storage/es/spanstore/dbmodel",
     "github.com/jaegertracing/jaeger/plugin/storage/grpc",
     "github.com/jaegertracing/jaeger/storage/dependencystore",
@@ -478,9 +509,9 @@
     "github.com/logzio/logzio-go",
     "github.com/olivere/elastic",
     "github.com/opentracing/opentracing-go",
-    "github.com/opentracing/opentracing-go/log",
     "github.com/pkg/errors",
     "github.com/spf13/viper",
+    "github.com/stretchr/testify/assert",
     "gopkg.in/yaml.v2",
   ]
   solver-name = "gps-cdcl"
