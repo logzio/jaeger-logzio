@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"jaeger-logzio/store/objects"
+	"math"
 	"time"
 
 	"github.com/jaegertracing/jaeger/storage/spanstore"
@@ -14,6 +15,12 @@ import (
 	"github.com/jaegertracing/jaeger/plugin/storage/es/spanstore/dbmodel"
 	"github.com/olivere/elastic"
 	"github.com/pkg/errors"
+	"github.com/avast/retry-go"
+)
+
+const (
+	maxRetryAttempts = 4
+	maxBulkSize = 100
 )
 
 // TraceFinder object builds search request from traceIDs and parse the result to traces
@@ -37,7 +44,7 @@ func NewTraceFinder(reader *LogzioSpanReader) TraceFinder {
 func (finder *TraceFinder) traceIDsMultiSearchRequestBody(traceIDs []model.TraceID, nextTime uint64, endTime time.Time, searchAfterTime map[model.TraceID]uint64) string {
 	multiSearchBody := ""
 	for _, traceID := range traceIDs {
-		finder.logger.Debug(fmt.Sprintf("processing trace %s", traceID.String()))
+		finder.logger.Debug(fmt.Sprintf("creating request for trace %s", traceID.String()))
 		traceIDTerm := elastic.NewTermQuery(traceIDField, traceID.String())
 		rangeQuery := elastic.NewRangeQuery(startTimeField).Gte(nextTime).Lte(model.TimeAsEpochMicroseconds(endTime))
 		query := elastic.NewBoolQuery().Filter(traceIDTerm, rangeQuery)
@@ -59,7 +66,7 @@ func (finder *TraceFinder) traceIDsMultiSearchRequestBody(traceIDs []model.Trace
 	return multiSearchBody
 }
 
-func (finder *TraceFinder) getTracesMap(traceIDs []model.TraceID, startTime time.Time, endTime time.Time) map[model.TraceID]*model.Trace {
+func (finder *TraceFinder) getTracesMap(traceIDs []model.TraceID, tracesChan chan *model.Trace, missingTraceIDs chan model.TraceID, startTime time.Time, endTime time.Time) error {
 	nextTime := model.TimeAsEpochMicroseconds(startTime)
 	searchAfterTime := make(map[model.TraceID]uint64)
 	totalDocumentsFetched := make(map[model.TraceID]int)
@@ -75,7 +82,7 @@ func (finder *TraceFinder) getTracesMap(traceIDs []model.TraceID, startTime time
 		results, err := finder.reader.getMultiSearchResult(multiSearchBody)
 		if err != nil || results.Responses == nil || len(results.Responses) == 0 {
 			if err != nil {
-				finder.logger.Error(err.Error())
+				return err
 			}
 			break
 		}
@@ -86,7 +93,7 @@ func (finder *TraceFinder) getTracesMap(traceIDs []model.TraceID, startTime time
 			}
 			spans, err := finder.collectSpans(result.Hits.Hits)
 			if err != nil {
-				finder.logger.Warn("can't collect spans form result")
+				finder.logger.Warn(fmt.Sprintf("can't collect spans form result: %s", err.Error()))
 				continue
 			}
 			lastSpan := spans[len(spans)-1]
@@ -104,7 +111,20 @@ func (finder *TraceFinder) getTracesMap(traceIDs []model.TraceID, startTime time
 			}
 		}
 	}
-	return tracesMap
+	finder.logger.Info(fmt.Sprintf("%d traces return", len(tracesMap)))
+	if len(tracesMap) == 0 {
+		return errors.New(fmt.Sprintf("No search results for traces: %v", traceIDs))
+	}
+	for traceID := range tracesMap {
+		tracesChan <- tracesMap[traceID]
+	}
+	for _, traceID := range traceIDs {
+		if _, exist := tracesMap[traceID]; !exist {
+			finder.logger.Info(fmt.Sprintf("misssssssing trace: %s",traceID.String()))
+			missingTraceIDs <- traceID
+		}
+	}
+	return nil
 }
 
 func (finder *TraceFinder) collectSpans(esSpansRaw []*elastic.SearchHit) ([]*model.Span, error) {
@@ -125,15 +145,50 @@ func (finder *TraceFinder) collectSpans(esSpansRaw []*elastic.SearchHit) ([]*mod
 	return spans, nil
 }
 
-func (finder *TraceFinder) multiRead(ctx context.Context, traceIDs []model.TraceID, startTime, endTime time.Time) ([]*model.Trace, error) {
+func (finder *TraceFinder) getTraceBulk(traceIDs []model.TraceID, tracesChan chan *model.Trace, missingTraceIDs chan model.TraceID, startTime, endTime time.Time, bulkIndex int) {
+	err := retry.Do( // retry in case one of the bulk requests failed
+		func() error {
+			finder.logger.Debug(fmt.Sprintf( "processing bulk %v", bulkIndex))
+			return finder.getTracesMap(traceIDs, tracesChan, missingTraceIDs, startTime, endTime)
+		},
+		retry.Attempts(maxRetryAttempts),
+		retry.Delay(time.Millisecond*500),
+		retry.OnRetry(
+			func(n uint, err error) {
+				finder.logger.Debug(fmt.Sprintf("retrying bulk %d retry %d/%d", bulkIndex, n+1, maxRetryAttempts))
+			}),
+	)
+	if err != nil {
+		finder.logger.Error(fmt.Sprintf("failed to fetch bulk %d with %d traces: %s", bulkIndex, len(traceIDs), err.Error()))
+	}
+}
+
+func (finder *TraceFinder) multiRead(traceIDs []model.TraceID, startTime, endTime time.Time) ([]*model.Trace, error) {
 	if len(traceIDs) == 0 {
 		return []*model.Trace{}, nil
 	}
-	tracesMap := finder.getTracesMap(traceIDs, startTime, endTime)
+	tracesChan := make(chan *model.Trace)
+	missingTraceIDs := make(chan model.TraceID)
+	bulkCount := int(math.Ceil(float64(len(traceIDs))/float64(maxBulkSize)))
+	finder.logger.Debug(fmt.Sprintf("performing %v bulk searches for %v traceIDs", bulkCount, len(traceIDs)))
+	expectedTraceCount := len(traceIDs)
+	for i := 0  ; i < bulkCount; i++  {
+		bulkStartOffset := i*maxBulkSize
+		bulkEnd := int(math.Min(float64(bulkStartOffset+maxBulkSize), float64(len(traceIDs))))
+		go finder.getTraceBulk(traceIDs[bulkStartOffset:bulkEnd], tracesChan, missingTraceIDs, startTime, endTime, i+1)
+		time.Sleep(time.Millisecond*300)
+	}
 
 	var traces []*model.Trace
-	for _, trace := range tracesMap {
-		traces = append(traces, trace)
+	for i := 0; i < expectedTraceCount; i++ {
+		select {
+			case res := <-tracesChan:
+				traces = append(traces, res)
+			case traceID := <-missingTraceIDs:
+				finder.logger.Warn("missing trace: %s", traceID.String())
+			case <-time.After(10 * time.Second): // continue if there are no traces in the channel for 10 seconds
+				break
+		}
 	}
 	return traces, nil
 }

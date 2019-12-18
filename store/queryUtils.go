@@ -119,5 +119,8 @@ func validateQuery(p *spanstore.TraceQueryParameters) error {
 	if p.DurationMin != 0 && p.DurationMax != 0 && p.DurationMin > p.DurationMax {
 		return ErrDurationMinGreaterThanMax
 	}
+	if p.NumTraces > 1000 {
+		p.NumTraces = 1000
+	}
 	return nil
 }

@@ -40,7 +40,7 @@ const (
 	defaultDocCount          = 10000 // the default elasticsearch allowed limit
 	logzioMaxAggregationSize = 1000
 	defaultNumTraces         = 100
-	maxSearchWindowHours     = 72
+	maxSearchWindowHours     = 48
 	singleValueIndex         = 0
 )
 
@@ -88,9 +88,9 @@ func NewLogzioSpanReader(config LogzioConfig, logger hclog.Logger) *LogzioSpanRe
 		apiToken: config.APIToken,
 		apiURL:   config.APIURL(),
 		sourceFn: getSourceFn(),
-		client:   &http.Client{
+		client: &http.Client{
 			Transport: &http.Transport{
-				Proxy:           http.ProxyFromEnvironment,
+				Proxy: http.ProxyFromEnvironment,
 			},
 		},
 	}
@@ -118,7 +118,7 @@ func (reader *LogzioSpanReader) GetTrace(ctx context.Context, traceID model.Trac
 	span, ctx := opentracing.StartSpanFromContext(ctx, "GetTrace")
 	defer span.Finish()
 	currentTime := time.Now()
-	traces, err := reader.traceFinder.multiRead(ctx, []model.TraceID{traceID}, currentTime.Add(-time.Hour*maxSearchWindowHours), currentTime)
+	traces, err := reader.traceFinder.multiRead([]model.TraceID{traceID}, currentTime.Add(-time.Hour*maxSearchWindowHours), currentTime)
 	if err != nil {
 		return nil, err
 	}
@@ -156,7 +156,7 @@ func (reader *LogzioSpanReader) FindTraces(ctx context.Context, query *spanstore
 	if err != nil {
 		return nil, err
 	}
-	return reader.traceFinder.multiRead(ctx, uniqueTraceIDs, query.StartTimeMin, query.StartTimeMax)
+	return reader.traceFinder.multiRead(uniqueTraceIDs, query.StartTimeMin, query.StartTimeMax)
 }
 
 // FindTraceIDs retrieve traceIDs that match the traceQuery
