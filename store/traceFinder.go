@@ -66,7 +66,7 @@ func (finder *TraceFinder) traceIDsMultiSearchRequestBody(traceIDs []model.Trace
 	return multiSearchBody
 }
 
-func (finder *TraceFinder) getTracesMap(traceIDs []model.TraceID, tracesChan chan *model.Trace, startTime time.Time, endTime time.Time) error {
+func (finder *TraceFinder) getTracesToChannel(traceIDs []model.TraceID, tracesChan chan *model.Trace, startTime time.Time, endTime time.Time) error {
 	nextTime := model.TimeAsEpochMicroseconds(startTime)
 	searchAfterTime := make(map[model.TraceID]uint64)
 	totalDocumentsFetched := make(map[model.TraceID]int)
@@ -141,11 +141,11 @@ func (finder *TraceFinder) collectSpans(esSpansRaw []*elastic.SearchHit) ([]*mod
 	return spans, nil
 }
 
-func (finder *TraceFinder) getTraceBulk(traceIDs []model.TraceID, tracesChan chan *model.Trace, startTime, endTime time.Time, bulkIndex int) {
+func (finder *TraceFinder) bulkSearchWithRetry(traceIDs []model.TraceID, tracesChan chan *model.Trace, startTime, endTime time.Time, bulkIndex int) {
 	err := retry.Do( // retry in case one of the bulk requests failed
 		func() error {
 			finder.logger.Debug(fmt.Sprintf("processing bulk %v", bulkIndex))
-			return finder.getTracesMap(traceIDs, tracesChan, startTime, endTime)
+			return finder.getTracesToChannel(traceIDs, tracesChan, startTime, endTime)
 		},
 		retry.Attempts(maxRetryAttempts),
 		retry.Delay(time.Millisecond*500),
@@ -164,13 +164,13 @@ func (finder *TraceFinder) multiRead(traceIDs []model.TraceID, startTime, endTim
 		return []*model.Trace{}, nil
 	}
 	tracesChan := make(chan *model.Trace)
-	bulkCount := int(math.Ceil(float64(len(traceIDs)) / float64(maxBulkSize)))
-	finder.logger.Debug(fmt.Sprintf("performing %v bulk searches for %v traceIDs", bulkCount, len(traceIDs)))
+	requestBulksCount := int(math.Ceil(float64(len(traceIDs)) / float64(maxBulkSize)))
+	finder.logger.Debug(fmt.Sprintf("performing %v bulk searches for %v traceIDs", requestBulksCount, len(traceIDs)))
 	expectedTraceCount := len(traceIDs)
-	for i := 0; i < bulkCount; i++ {
+	for i := 0; i < requestBulksCount; i++ {
 		bulkStartOffset := i * maxBulkSize
 		bulkEnd := int(math.Min(float64(bulkStartOffset+maxBulkSize), float64(len(traceIDs))))
-		go finder.getTraceBulk(traceIDs[bulkStartOffset:bulkEnd], tracesChan, startTime, endTime, i+1)
+		go finder.bulkSearchWithRetry(traceIDs[bulkStartOffset:bulkEnd], tracesChan, startTime, endTime, i+1)
 		time.Sleep(time.Millisecond * 300)
 	}
 
@@ -184,7 +184,7 @@ func (finder *TraceFinder) multiRead(traceIDs []model.TraceID, startTime, endTim
 			} else {
 				finder.logger.Warn("missing a trace...")
 			}
-		case <-time.After(15 * time.Second): // continue if there are no traces in the channel for 10 seconds
+		case <-time.After(15 * time.Second): // continue if there are no traces in the channel for 15 seconds
 			{
 				finder.logger.Warn("got timeout while waiting for response")
 				timeout = true
