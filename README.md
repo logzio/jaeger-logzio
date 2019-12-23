@@ -45,7 +45,7 @@ If you want to run the jaeger-logzio with the Jaeger collector only, use the fol
 ```
 docker run -e ACCOUNT_TOKEN=<<ACCOUNT_TOKEN>> \
   --network=net-logzio \
-  --name=jaeger-logzio \
+  --name=jaeger-logzio-collector \
   -p 14268:14268 \
   -p 9411:9411 \
   -p 14267:14267 \
@@ -100,5 +100,6 @@ docker run --rm -it \
   jaegertracing/example-hotrod:1.9 \
   all
 ```
+**Note**: if you're not running the all-in-one container, you should replace "jaeger-logzio" with the name of the host/container which runs the collector.
 
 Then navigate to http://localhost:8080 .
