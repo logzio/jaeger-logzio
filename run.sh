@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-docker run -d -e ACCOUNT_TOKEN=<<ACCOUNT_TOKEN>> -e API_TOKEN=<<API_TOKEN>> \
+docker run -d --rm -e ACCOUNT_TOKEN=<<ACCOUNT_TOKEN>> -e API_TOKEN=<<API_TOKEN>> \
   --network=net-logzio \
   -p 5775:5775/udp \
   -p 6831:6831/udp \
