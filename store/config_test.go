@@ -2,44 +2,62 @@ package store
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 const (
-	testToken = "testToken"
-	testURL = "testURL"
+	testAccountToken = "testAccountToken"
+	testAPIToken     = "testApiToken"
+	testRegion       = "testRegion"
+	listenerURL      = "https://listener.logz.io:8071"
+	listenerURLEu    = "https://listener-eu.logz.io:8071"
+	apiURL           = "https://api.logz.io/v1/elasticsearch/_msearch"
+	apiURLEu         = "https://api-eu.logz.io/v1/elasticsearch/_msearch"
 )
 
 func TestValidate(tester *testing.T) {
 	config := LogzioConfig{
-		AccountToken:	"",
-		ListenerURL:	"",
-	}
-	err := config.Validate()
-	if err == nil {
-		tester.Error("validation failed, empty account token should produce error")
+		AccountToken: "",
+		APIToken:     "",
+		Region:       "",
 	}
 
-	if config.ListenerURL != "https://listener.logz.io:8071" {
-		tester.Errorf("listener url incorrect, got: %s, expected: https://listener.logz.io:8071", config.ListenerURL)
+	assert.Error(tester, config.validate(logger), "validation failed, empty account token and api token should produce error")
+
+	config.APIToken = testAccountToken
+	assert.NoError(tester, config.validate(logger), "validation failed, one of api token or account token can be empty")
+
+	config.AccountToken = testAccountToken
+	config.APIToken = ""
+	assert.NoError(tester, config.validate(logger), "validation failed, one of api token or account token can be empty")
+
+}
+
+func TestRegion(tester *testing.T) {
+	config := LogzioConfig{
+		AccountToken: testAccountToken,
+		APIToken:     testAccountToken,
+		Region:       "",
 	}
 
-	config.ListenerURL = testURL
-	config.Validate()
-	if config.ListenerURL != testURL {
-		tester.Error("listener url changed, should have stayed the same")
-	}
+	assert.Equal(tester, config.ListenerURL(), listenerURL, "listener url incorrect")
+	assert.Equal(tester, config.APIURL(), apiURL, "api url incorrect")
+
+	config.Region = "us"
+	assert.Equal(tester, config.ListenerURL(), listenerURL, "listener url incorrect")
+	assert.Equal(tester, config.APIURL(), apiURL, "api url incorrect")
+
+	config.Region = "eu"
+	assert.Equal(tester, config.ListenerURL(), listenerURLEu, "listener url incorrect")
+	assert.Equal(tester, config.APIURL(), apiURLEu, "api url incorrect")
 }
 
 func TestParseConfig(tester *testing.T) {
-	config, err := ParseConfig("fixtures/testConfig.yaml")
-	if err != nil {
-		tester.Errorf("error parsing config file: %s", err.Error())
-		return
-	}
-	if config.ListenerURL != testURL {
-		tester.Errorf("wrong listener, expected: testURL, got: %s", config.ListenerURL)
-	}
-	if config.AccountToken != testToken {
-		tester.Errorf("wrong account token, expected: testToken, got: %s", config.AccountToken)
-	}
+	config, err := ParseConfig("fixtures/testConfig.yaml", logger)
+	assert.NoError(tester, err)
+
+	assert.Equal(tester, config.Region, testRegion)
+	assert.Equal(tester, config.AccountToken, testAccountToken)
+	assert.Equal(tester, config.APIToken, testAPIToken)
 }

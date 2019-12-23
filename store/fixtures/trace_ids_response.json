@@ -1,0 +1,35 @@
+{
+  "responses": [
+    {
+      "status": 200,
+      "hits": {
+        "total": 3,
+        "max_score": 0.0,
+        "hits": []
+      },
+      "aggregations": {
+        "traceIDs": {
+          "doc_count_error_upper_bound": 0,
+          "sum_other_doc_count": 0,
+          "buckets": [
+            {
+              "key": "42",
+              "doc_count": 1,
+              "startTime": {
+                "value": 1.57545004326908E15
+              }
+            },
+            {
+              "key": "314",
+              "doc_count": 1,
+              "startTime": {
+                "value": 1.575450041420302E15
+              }
+            }
+          ]
+        }
+      },
+      "error": null
+    }
+  ]
+}

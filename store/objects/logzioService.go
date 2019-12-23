@@ -1,4 +1,4 @@
-package store
+package objects
 
 import (
 	"fmt"
@@ -26,7 +26,8 @@ func NewLogzioService(span *model.Span) LogzioService {
 	return service
 }
 
-func (service *LogzioService) hashCode() (string, error) {
+// HashCode receives a logzio service and returns a hash representation of it's service name and operation name.
+func (service *LogzioService) HashCode() (string, error) {
 	hash := fnv.New64a()
 	_, err := hash.Write(append([]byte(service.ServiceName), []byte(service.OperationName)...))
 	return fmt.Sprintf("%x", hash.Sum64()), err

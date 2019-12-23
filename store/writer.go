@@ -2,6 +2,7 @@ package store
 
 import (
 	"encoding/json"
+	"jaeger-logzio/store/objects"
 	"strings"
 	"time"
 
@@ -27,7 +28,7 @@ func (writer *loggerWriter) Write(msgBytes []byte) (n int, err error) {
 	if strings.Contains(strings.ToLower(msgString), "error") {
 		writer.logger.Error(msgString)
 	} else {
-		writer.logger.Info(msgString)
+		writer.logger.Debug(msgString)
 	}
 	return len(msgBytes), nil
 }
@@ -44,7 +45,7 @@ type LogzioSpanWriter struct {
 func NewLogzioSpanWriter(config LogzioConfig, logger hclog.Logger) (*LogzioSpanWriter, error) {
 	sender, err := logzio.New(
 		config.AccountToken,
-		logzio.SetUrl(config.ListenerURL),
+		logzio.SetUrl(config.ListenerURL()),
 		logzio.SetDebug(&loggerWriter{logger: logger}),
 		logzio.SetDrainDiskThreshold(dropLogsDiskThreshold))
 
@@ -58,7 +59,7 @@ func NewLogzioSpanWriter(config LogzioConfig, logger hclog.Logger) (*LogzioSpanW
 		serviceCache: cache.NewLRUWithOptions(
 			100000,
 			&cache.Options{
-				TTL: 48 * time.Hour,
+				TTL: 24 * time.Hour,
 			},
 		),
 	}
@@ -67,7 +68,7 @@ func NewLogzioSpanWriter(config LogzioConfig, logger hclog.Logger) (*LogzioSpanW
 
 // WriteSpan receives a Jaeger span, converts it to logzio span and sends it to logzio
 func (spanWriter *LogzioSpanWriter) WriteSpan(span *model.Span) error {
-	spanBytes, err := TransformToLogzioSpanBytes(span)
+	spanBytes, err := objects.TransformToLogzioSpanBytes(span)
 	if err != nil {
 		return err
 	}
@@ -75,8 +76,8 @@ func (spanWriter *LogzioSpanWriter) WriteSpan(span *model.Span) error {
 	if err != nil {
 		return err
 	}
-	service := NewLogzioService(span)
-	serviceHash, err := service.hashCode()
+	service := objects.NewLogzioService(span)
+	serviceHash, err := service.HashCode()
 
 	if spanWriter.serviceCache.Get(serviceHash) == nil || err != nil {
 		if err == nil {
