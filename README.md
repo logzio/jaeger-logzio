@@ -23,9 +23,8 @@ If you want to run jaeger-logzio all-in-one (logz.io storage, Jaeger agent, coll
 | ACCOUNT_TOKEN | **Required**.<br> Required when using as a collector to ship traces to Logz.io. <br> Replace `<ACCOUNT-TOKEN>` with the [token](https://app.logz.io/#/dashboard/settings/general) of the account you want to ship to. |
 | API_TOKEN | **Required**.<br> Required to read back traces from Logz.io. <br> Replace `<API-TOKEN>` with the [API token](https://app.logz.io/#/dashboard/settings/api-tokens) from the account you want to use. |
 | REGION | **Default**: `us` <br> Two-letters region code. Replace `us` with your region's code. For more information on finding your account's region, see [Account region](https://docs.logz.io/user-guide/accounts/account-region.html). |
-| CUSTOM_LISTENER_URL | Use this to set a custom listener URL (e.g http://localhost:9200). This config will override the region variable.|
-| CUSTOM_API | Use this to set an api URL (e.g http://localhost:9200/_msearch). This config will override the region variable.|
 | GRPC_STORAGE_PLUGIN_LOG_LEVEL | **Default**: `warn` <br> Log level to omit. Applies to the storage integration only. |
+
 ```
 docker run -d -e ACCOUNT_TOKEN=<<ACCOUNT_TOKEN>> -e API_TOKEN=<<API_TOKEN>> \
   --name=jaeger-logzio \
@@ -64,6 +63,19 @@ docker run --rm --name=jaeger-agent --network=net-logzio \
   jaegertracing/jaeger-agent:latest \
   --reporter.tchannel.host-port=jaeger-logzio:14267
 ```
+
+----
+
+## Customizing shipping & API URLs
+
+When you use the `REGION` environment variables, your listener URL and API URL are automatically set.
+For dev & testing purposes,
+you can override region settings by using these environment variables.
+
+| Parameter | Description |
+|---|---|
+| CUSTOM_LISTENER_URL	| Set a custom URL to ship logs to (e.g., `http://localhost:9200`). This overrides the `REGION` environment variable. |
+| CUSTOM_API | Set a custom API URL (e.g., `http://localhost:9200/_msearch`). This overrides the `REGION` environment variable. |
 
 ## Run go binary with bash
 
