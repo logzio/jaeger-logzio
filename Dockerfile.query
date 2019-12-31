@@ -1,0 +1,15 @@
+FROM jaegertracing/jaeger-query:latest
+FROM alpine
+
+COPY --from=0 /go/bin/query-linux /go/bin/query-linux
+ENV SPAN_STORAGE_TYPE grpc-plugin
+ENV GRPC_STORAGE_PLUGIN_BINARY "/go/bin/jaeger-logzio"
+
+
+COPY ./jaeger-logzio /go/bin/
+RUN  wget https://raw.githubusercontent.com/logzio/public-certificates/master/COMODORSADomainValidationSecureServerCA.crt && \
+        mkdir -p /etc/pki/tls/certs && \
+        cp COMODORSADomainValidationSecureServerCA.crt /etc/pki/tls/certs/ && \
+        rm COMODORSADomainValidationSecureServerCA.crt
+
+ENTRYPOINT /go/bin/query-linux
