@@ -89,9 +89,6 @@ of all the necessary pieces
 (Jaeger agent, collector, and query service)
 in separate containers.
 
-This type of deployment is useful if you've already deployed Jaeger
-and just need to integrate Logz.io.
-
 #### Deploy Jaeger components in separate containers
 
 <div class="tasklist">
