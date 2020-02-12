@@ -224,3 +224,7 @@ docker run --rm -it \
 **Note**: if you're not running the all-in-one container, you should replace "jaeger-logzio" with the name of the host/container which runs the collector.
 
 Then navigate to http://localhost:8080 .
+
+### Changelog
+ - v0.0.3
+    - Fix x509 certificate issue 
