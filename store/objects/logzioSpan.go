@@ -2,13 +2,14 @@ package objects
 
 import (
 	"encoding/json"
+	"time"
 
 	"github.com/jaegertracing/jaeger/model"
 	"github.com/jaegertracing/jaeger/plugin/storage/es/spanstore/dbmodel"
 )
 
 const (
-	spanLogType                = "jaegerSpan"
+	spanLogType = "jaegerSpan"
 	//TagDotReplacementCharacter state which character should replace the dot in es
 	TagDotReplacementCharacter = "@"
 )
@@ -29,6 +30,15 @@ type LogzioSpan struct {
 	Logs            []dbmodel.Log          `json:"logs"`
 	Process         dbmodel.Process        `json:"process,omitempty"`
 	Type            string                 `json:"type"`
+}
+
+type Result struct {
+	Raw        string `json:"raw"`
+	Sourcetype string `json:"sourcetype"`
+	Repo       string `json:"repo"`
+	Host       string `json:"host"`
+	Origin     string `json:"origin"`
+	Timestamp  int64  `json:"timestamp"`
 }
 
 func getTagsValues(tags []model.KeyValue) []string {
@@ -60,7 +70,18 @@ func TransformToLogzioSpanBytes(span *model.Span) ([]byte, error) {
 		Logs:            jsonSpan.Logs,
 		Type:            spanLogType,
 	}
-	return json.Marshal(logzioSpan)
+	raw, err := json.Marshal(logzioSpan)
+	if err != nil {
+		return nil, err
+	}
+
+	result := Result{
+		Raw:        string(raw),
+		Repo:       "default",
+		Sourcetype: "jaeger",
+		Timestamp:  time.Now().UnixNano() / int64(time.Millisecond),
+	}
+	return json.Marshal(result)
 }
 
 // TransformToDbModelSpan coverts logz.io span to ElasticSearch span

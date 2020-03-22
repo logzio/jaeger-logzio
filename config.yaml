@@ -1,3 +1,4 @@
 region: "us"
-apiToken: "api-token"
-accountToken: "sapmle-token"
+apiToken: "eyJhbGciOiJIUzUxMiIsInppcCI6IkRFRiJ9.eJwdyksKgDAMANG7ZN2A_ae9jbENVLAIKgji3S0u5zEPrGeDDFTEGOGK1pNGV6kiW78gSwjBOEnRJlBwXDzmuWytj-oskLUnF-KkLSmo9_6DNwOcfj--iRi0.MWdBybVWJf2rzD-AUe88lujuQvNJzdn-PDpFB1SgQDq0Y1RBpa4r0dMcyjcfFtQrG_-eSIRzaERi3RvCHewaFw"
+accountToken: "eyJhbGciOiJIUzUxMiIsInppcCI6IkRFRiJ9.eJwdyksKgDAMANG7ZN2A_ae9jbENVLAIKgji3S0u5zEPrGeDDFTEGOGK1pNGV6kiW78gSwjBOEnRJlBwXDzmuWytj-oskLUnF-KkLSmo9_6DNwOcfj--iRi0.MWdBybVWJf2rzD-AUe88lujuQvNJzdn-PDpFB1SgQDq0Y1RBpa4r0dMcyjcfFtQrG_-eSIRzaERi3RvCHewaFw"
+customListenerUrl: "http://localhost:9999/api/v1/data"

@@ -2,13 +2,12 @@ package store
 
 import (
 	"encoding/json"
+	"jaeger-logzio/store/logzio"
 	"jaeger-logzio/store/objects"
 	"strings"
 	"time"
 
 	"github.com/jaegertracing/jaeger/pkg/cache"
-
-	"github.com/logzio/logzio-go"
 
 	"github.com/hashicorp/go-hclog"
 	"github.com/jaegertracing/jaeger/model"
@@ -87,7 +86,17 @@ func (spanWriter *LogzioSpanWriter) WriteSpan(span *model.Span) error {
 		if err != nil {
 			return err
 		}
-		err = spanWriter.sender.Send(serviceBytes)
+		serviceResult := objects.Result{
+			Raw:        string(serviceBytes),
+			Repo:       "default",
+			Sourcetype: "jaeger",
+			Timestamp:  time.Now().UnixNano() / int64(time.Millisecond),
+		}
+		resultBytes, err := json.Marshal(serviceResult)
+		if err != nil {
+			return err
+		}
+		err = spanWriter.sender.Send(resultBytes)
 	}
 	return err
 }
