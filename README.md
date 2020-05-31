@@ -156,7 +156,7 @@ docker run --rm --name=jaeger-agent --network=net-logzio \
  -p6831:6831/udp \
  -p6832:6832/udp \
  -p5778:5778/tcp \
- jaegertracing/jaeger-agent:latest \
+ jaegertracing/jaeger-agent:1.9.0 \
  --reporter.tchannel.host-port=jaeger-logzio-collector:14267
 ```
 
@@ -199,6 +199,8 @@ go build
 
 Follow the [Getting Started](https://github.com/jaegertracing/jaeger/blob/master/CONTRIBUTING.md#getting-started) from the Jaeger's repo.
 Build the Jaeger all-in-one binary:
+
+**NOTE**: If you intend to run the generated binary file from the build on a unix base system, set this env variable first:`export GOOS=linux`
 
 ```
 go build -tags ui
