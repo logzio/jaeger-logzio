@@ -156,7 +156,7 @@ docker run --rm --name=jaeger-agent --network=net-logzio \
  -p6831:6831/udp \
  -p6832:6832/udp \
  -p5778:5778/tcp \
- jaegertracing/jaeger-agent:latest \
+ jaegertracing/jaeger-agent:1.9.0 \
  --reporter.tchannel.host-port=jaeger-logzio-collector:14267
 ```
 
