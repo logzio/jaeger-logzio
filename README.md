@@ -200,6 +200,8 @@ go build
 Follow the [Getting Started](https://github.com/jaegertracing/jaeger/blob/master/CONTRIBUTING.md#getting-started) from the Jaeger's repo.
 Build the Jaeger all-in-one binary:
 
+**NOTE**: If you intend to run the generated binary file from the build on a unix base system, set this env variable first:`export GOOS=linux`
+
 ```
 go build -tags ui
 ```
