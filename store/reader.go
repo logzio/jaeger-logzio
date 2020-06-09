@@ -29,11 +29,8 @@ const (
 	apiTokenHeader         = "X-API-TOKEN"
 	serviceNameField       = "process.serviceName"
 	operationNameField     = "operationName"
-	objectTagsField        = "tag"
+	objectTagsField        = "JaegerTag"
 	objectProcessTagsField = "process.tag"
-	nestedTagsField        = "tags"
-	nestedProcessTagsField = "process.tags"
-	nestedLogFieldsField   = "logs.fields"
 	tagKeyField            = "key"
 	tagValueField          = "value"
 
@@ -66,8 +63,6 @@ var (
 	defaultMaxDuration = model.DurationAsMicroseconds(time.Hour * 24)
 
 	objectTagFieldList = []string{objectTagsField, objectProcessTagsField}
-
-	nestedTagFieldList = []string{nestedTagsField, nestedProcessTagsField, nestedLogFieldsField}
 )
 
 // LogzioSpanReader is a struct which holds logzio span reader properties

@@ -216,6 +216,7 @@ func (finder *TraceFinder) findTraceIDsStrings(ctx context.Context, traceQuery *
 	if err != nil {
 		return nil, errors.Wrap(err, "Search service failed")
 	}
+
 	bucket, found := searchResult.Aggregations.Terms(traceIDAggregation)
 	if !found {
 		return nil, ErrUnableToFindTraceIDAggregation
@@ -227,13 +228,10 @@ func (finder *TraceFinder) findTraceIDsStrings(ctx context.Context, traceQuery *
 
 func (finder *TraceFinder) buildTagQuery(k string, v string) elastic.Query {
 	objectTagListLen := len(objectTagFieldList)
-	queries := make([]elastic.Query, len(nestedTagFieldList)+objectTagListLen)
+	queries := make([]elastic.Query, objectTagListLen)
 	kd := finder.spanConverter.ReplaceDot(k)
 	for i := range objectTagFieldList {
 		queries[i] = buildObjectQuery(objectTagFieldList[i], kd, v)
-	}
-	for i := range nestedTagFieldList {
-		queries[i+objectTagListLen] = buildNestedQuery(nestedTagFieldList[i], k, v)
 	}
 
 	// but configuration can change over time
