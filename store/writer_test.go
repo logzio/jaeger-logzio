@@ -19,8 +19,8 @@ import (
 const (
 	testOperation = "testOperation"
 	testService   = "testService"
-	testValue	  = "testValue"
-	testName	  = "John Smith"
+	testValue     = "testValue"
+	testName      = "John Smith"
 )
 
 func TestWriteSpan(tester *testing.T) {

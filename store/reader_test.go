@@ -100,16 +100,16 @@ func TestFindTraces(tester *testing.T) {
 func TestFindTraceIDs(tester *testing.T) {
 	const minTime = 1000000
 	const maxTime = 2000000
-	tags := map[string]string {
-		"name":			testName,
-		"example.Key":	testValue,
+	tags := map[string]string{
+		"name":        testName,
+		"example.Key": testValue,
 	}
 	query := spanstore.TraceQueryParameters{
 		ServiceName:   testService,
 		OperationName: testOperation,
 		StartTimeMin:  time.Unix(0, minTime*1000),
 		StartTimeMax:  time.Unix(0, maxTime*1000),
-		Tags:		   tags,
+		Tags:          tags,
 	}
 	_, _ = reader.FindTraceIDs(context.Background(), &query)
 
@@ -130,13 +130,13 @@ func TestFindTraceIDs(tester *testing.T) {
 
 	for key, value := range tags {
 		assert.True(tester,
-			strings.Contains(reqBody,fmt.Sprintf("{\"must\":{\"match\":{\"JaegerTag.%s\":{\"query\":\"%s\"}}}}",
-				strings.ReplaceAll(key,".", objects.TagDotReplacementCharacter) ,value)),
+			strings.Contains(reqBody, fmt.Sprintf("{\"must\":{\"match\":{\"JaegerTag.%s\":{\"query\":\"%s\"}}}}",
+				strings.ReplaceAll(key, ".", objects.TagDotReplacementCharacter), value)),
 			fmt.Sprintf("tag filter for '%s' is incorrect or not exist", key))
 
 		assert.True(tester,
-			strings.Contains(reqBody,fmt.Sprintf("{\"must\":{\"match\":{\"process.tag.%s\":{\"query\":\"%s\"}}}}",
-				strings.ReplaceAll(key,".", objects.TagDotReplacementCharacter) ,value)),
+			strings.Contains(reqBody, fmt.Sprintf("{\"must\":{\"match\":{\"process.tag.%s\":{\"query\":\"%s\"}}}}",
+				strings.ReplaceAll(key, ".", objects.TagDotReplacementCharacter), value)),
 			fmt.Sprintf("tag filter for '%s' is incorrect or not exist", key))
 	}
 }
