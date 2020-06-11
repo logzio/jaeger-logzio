@@ -2,6 +2,7 @@ package store
 
 import (
 	"encoding/json"
+	"github.com/jaegertracing/jaeger/plugin/storage/es/spanstore/dbmodel"
 	"jaeger-logzio/store/objects"
 	"strings"
 	"time"
@@ -76,6 +77,15 @@ func (spanWriter *LogzioSpanWriter) WriteSpan(span *model.Span) error {
 	if err != nil {
 		return err
 	}
+
+	logs := getSpanLogs(span)
+	ll, _ := json.MarshalIndent(logs, "","	")
+	spanWriter.logger.Debug(string(ll))
+	for _, log := range logs {
+		l, _ := json.Marshal(log)
+		spanWriter.sender.Send(l)
+	}
+
 	service := objects.NewLogzioService(span)
 	serviceHash, err := service.HashCode()
 
@@ -90,6 +100,23 @@ func (spanWriter *LogzioSpanWriter) WriteSpan(span *model.Span) error {
 		err = spanWriter.sender.Send(serviceBytes)
 	}
 	return err
+}
+
+func getSpanLogs(span *model.Span) []interface{} {
+	spanConverter := dbmodel.NewFromDomain(true, make([]string, 0) , objects.TagDotReplacementCharacter)
+	jsonSpan := spanConverter.FromDomainEmbedProcess(span)
+	var res []interface{}
+	for _, log := range span.Logs {
+		flog := make(map[string]interface{})
+		for _, field := range log.Fields {
+			flog[field.Key] = field.VStr
+		}
+		flog["@timestamp"] = jsonSpan.StartTimeMillis
+		flog["traceID"] = jsonSpan.TraceID
+		flog["type"] = "hotrod"
+		res = append(res, flog)
+	}
+	return res
 }
 
 // Close stops and drains logzio sender
