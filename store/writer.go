@@ -2,10 +2,11 @@ package store
 
 import (
 	"encoding/json"
-	"github.com/jaegertracing/jaeger/plugin/storage/es/spanstore/dbmodel"
 	"jaeger-logzio/store/objects"
 	"strings"
 	"time"
+
+	"github.com/jaegertracing/jaeger/plugin/storage/es/spanstore/dbmodel"
 
 	"github.com/jaegertracing/jaeger/pkg/cache"
 
@@ -79,7 +80,7 @@ func (spanWriter *LogzioSpanWriter) WriteSpan(span *model.Span) error {
 	}
 
 	logs := getSpanLogs(span)
-	ll, _ := json.MarshalIndent(logs, "","	")
+	ll, _ := json.MarshalIndent(logs, "", "	")
 	spanWriter.logger.Debug(string(ll))
 	for _, log := range logs {
 		l, _ := json.Marshal(log)
@@ -103,7 +104,7 @@ func (spanWriter *LogzioSpanWriter) WriteSpan(span *model.Span) error {
 }
 
 func getSpanLogs(span *model.Span) []interface{} {
-	spanConverter := dbmodel.NewFromDomain(true, make([]string, 0) , objects.TagDotReplacementCharacter)
+	spanConverter := dbmodel.NewFromDomain(true, make([]string, 0), objects.TagDotReplacementCharacter)
 	jsonSpan := spanConverter.FromDomainEmbedProcess(span)
 	var res []interface{}
 	for _, log := range span.Logs {
