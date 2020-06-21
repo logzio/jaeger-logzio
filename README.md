@@ -228,8 +228,9 @@ docker run --rm -it \
 Then navigate to http://localhost:8080 .
 
 ### Changelog
- - v1.0.0 - **Braking Changes**
+ - v1.0.0 - **Breaking Changes**
     - Support for searching traces by tags is affected by the introduction of new tags.
+    - Static image versions of Jaeger components (1.18)
     - Fix empty tags bug
         - Since the deprecation of TChannel in version 1.16, it is necessary to use gRPC reporter protocol when running a standalone Jaeger agent. - see "Run Jaeger agent"
  - v0.0.3
