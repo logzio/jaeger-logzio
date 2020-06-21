@@ -103,8 +103,8 @@ func (spanWriter *LogzioSpanWriter) Close() {
 func (spanWriter *LogzioSpanWriter) dropEmptyTags(tags []model.KeyValue) []model.KeyValue {
 	for i, tag := range tags {
 		if tag.Key == "" {
-			tags[i] = tags[len(tags)-1] 	// Copy last element to index i.
-			tags = tags[:len(tags)-1]	  // Truncate slice.
+			tags[i] = tags[len(tags)-1] // Copy last element to index i.
+			tags = tags[:len(tags)-1]   // Truncate slice.
 			spanWriter.logger.Warn(fmt.Sprintf("Found tag empty key: %s, dropping tag..", tag.String()))
 		}
 	}

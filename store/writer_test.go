@@ -64,3 +64,44 @@ func TestWriteSpan(tester *testing.T) {
 	assert.Equal(tester, logzioService.OperationName, testOperation)
 	assert.Equal(tester, logzioService.ServiceName, testService)
 }
+
+func TestDropEmptyTags(tester *testing.T) {
+	var recordedRequests []byte
+	logger := hclog.New(&hclog.LoggerOptions{
+		Level:      hclog.Debug,
+		Name:       "jaeger-logzio-tests",
+		JSONFormat: true,
+	})
+	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		recordedRequests, _ = ioutil.ReadAll(req.Body)
+		rw.WriteHeader(http.StatusOK)
+	}))
+
+	defer server.Close()
+	tags := []model.KeyValue{
+		{
+			Key:  "testTag",
+			VStr: testValue,
+		},
+		{
+			Key:  "",
+			VStr: testValue,
+		},
+	}
+	span := &model.Span{
+		TraceID:       model.NewTraceID(0, 1),
+		SpanID:        model.NewSpanID(0),
+		Tags: 			tags,
+		Process:		model.NewProcess(testService, tags),
+	}
+	writer, _ := NewLogzioSpanWriter(LogzioConfig{AccountToken: testAccountToken, CustomListenerURL: server.URL}, logger)
+	assert.NoError(tester, writer.WriteSpan(span))
+
+	time.Sleep(time.Second * 6)
+	requests := strings.Split(string(recordedRequests), "\n")
+	var logzioSpan objects.LogzioSpan
+	assert.NoError(tester, json.Unmarshal([]byte(requests[0]), &logzioSpan))
+	assert.Equal(tester, 1, len(logzioSpan.Tag))
+	assert.Equal(tester, 1, len(logzioSpan.Process.Tag))
+
+}
