@@ -230,6 +230,7 @@ Then navigate to http://localhost:8080 .
 ### Changelog
  - v1.0.0 - **Braking Changes**
     - Search traces by tags support
+    - Fix empty tags bug
     - Use static Jaeger components version (1.18)
         - Since tchannel has been deprecated in version 1.16, when running standalone Jaeger agent, use grpc reporter protocol - see "Run Jaeger agent"
  - v0.0.3

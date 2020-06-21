@@ -89,10 +89,10 @@ func TestDropEmptyTags(tester *testing.T) {
 		},
 	}
 	span := &model.Span{
-		TraceID:       model.NewTraceID(0, 1),
-		SpanID:        model.NewSpanID(0),
-		Tags: 			tags,
-		Process:		model.NewProcess(testService, tags),
+		TraceID: model.NewTraceID(0, 1),
+		SpanID:  model.NewSpanID(0),
+		Tags:    tags,
+		Process: model.NewProcess(testService, tags),
 	}
 	writer, _ := NewLogzioSpanWriter(LogzioConfig{AccountToken: testAccountToken, CustomListenerURL: server.URL}, logger)
 	assert.NoError(tester, writer.WriteSpan(span))
