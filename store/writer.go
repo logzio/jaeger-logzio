@@ -2,6 +2,7 @@ package store
 
 import (
 	"encoding/json"
+	"fmt"
 	"jaeger-logzio/store/objects"
 	"strings"
 	"time"
@@ -68,6 +69,8 @@ func NewLogzioSpanWriter(config LogzioConfig, logger hclog.Logger) (*LogzioSpanW
 
 // WriteSpan receives a Jaeger span, converts it to logzio span and sends it to logzio
 func (spanWriter *LogzioSpanWriter) WriteSpan(span *model.Span) error {
+	span.Tags = spanWriter.dropEmptyTags(span.Tags)
+	span.Process.Tags = spanWriter.dropEmptyTags(span.Process.Tags)
 	spanBytes, err := objects.TransformToLogzioSpanBytes(span)
 	if err != nil {
 		return err
@@ -95,4 +98,15 @@ func (spanWriter *LogzioSpanWriter) WriteSpan(span *model.Span) error {
 // Close stops and drains logzio sender
 func (spanWriter *LogzioSpanWriter) Close() {
 	spanWriter.sender.Stop()
+}
+
+func (spanWriter *LogzioSpanWriter) dropEmptyTags(tags []model.KeyValue) []model.KeyValue {
+	for i, tag := range tags {
+		if tag.Key == "" {
+			tags[i] = tags[len(tags)-1] 	// Copy last element to index i.
+			tags = tags[:len(tags)-1]	  // Truncate slice.
+			spanWriter.logger.Warn(fmt.Sprintf("Found tag empty key: %s, dropping tag..", tag.String()))
+		}
+	}
+	return tags
 }
