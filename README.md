@@ -144,7 +144,7 @@ logzio/jaeger-logzio-query:latest
 | REGION | Two-letter region code, or blank for US East (Northern Virginia). This determnies your API URL. <br> You can find your region code in the [Regions and URLs](https://docs.logz.io/user-guide/accounts/account-region.html#regions-and-urls) table. |
 | GRPC_STORAGE_PLUGIN_LOG_LEVEL	(Default: `warn`) | The lowest log level to send. From lowest to highest, log levels are `trace`, `debug`, `info`, `warn`, `error`. <br> Controls logging for Jaeger Logz.io Collector only (not Jaeger components). |
 
-##### 4. _(If needed)_ Run Jaeger agent
+##### 4. Run Jaeger agent
 
 You can run your own instance of Jaeger agent.
 If you're not already running Jaeger agent,
@@ -156,8 +156,8 @@ docker run --rm --name=jaeger-agent --network=net-logzio \
  -p6831:6831/udp \
  -p6832:6832/udp \
  -p5778:5778/tcp \
- jaegertracing/jaeger-agent:1.9.0 \
- --reporter.tchannel.host-port=jaeger-logzio-collector:14267
+ jaegertracing/jaeger-agent:1.18.0 \
+ --reporter.grpc.host-port=jaeger-logzio-collector:14250
 ```
 
 ##### 5. Check Jaeger for your traces
@@ -228,5 +228,10 @@ docker run --rm -it \
 Then navigate to http://localhost:8080 .
 
 ### Changelog
+ - v1.0.0 - **Breaking Changes**
+    - Support for searching traces by tags is affected by the introduction of new tags.
+    - Static image versions of Jaeger components (1.18)
+    - Fix empty tags bug
+        - Since the deprecation of TChannel in version 1.16, it is necessary to use gRPC reporter protocol when running a standalone Jaeger agent. - see "Run Jaeger agent"
  - v0.0.3
     - Fix x509 certificate issue 

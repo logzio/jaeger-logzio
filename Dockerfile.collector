@@ -1,4 +1,4 @@
-FROM jaegertracing/jaeger-collector:1.15
+FROM jaegertracing/jaeger-collector:1.18
 FROM alpine
 COPY --from=0 /go/bin/collector-linux /go/bin/collector-linux
 ENV SPAN_STORAGE_TYPE grpc-plugin
