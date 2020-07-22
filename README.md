@@ -15,7 +15,7 @@ For most users, these won't be an issue,
 but they're still good to know:
 
 * **Lookback** must be 48 hours or less
-* **Limit Results** must be 1000 traces or less
+* **Limit Results** must be 4000 traces or less
 
 <!-- tabContainer:start -->
 <div class="branching-container">
