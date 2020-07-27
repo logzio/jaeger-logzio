@@ -111,7 +111,6 @@ docker run -e ACCOUNT_TOKEN=<<SHIPPING-TOKEN>> \
  --name=jaeger-logzio-collector \
  -p 14268:14268 \
  -p 9411:9411 \
- -p 14267:14267 \
  -p 14269:14269 \
  -p 14250:14250 \
 logzio/jaeger-logzio-collector:latest
@@ -124,6 +123,14 @@ logzio/jaeger-logzio-collector:latest
 | ACCOUNT_TOKEN (Required) | Required when using as a collector to ship traces to Logz.io. <br> Replace `<<SHIPPING-TOKEN>>` with the [token](https://app.logz.io/#/dashboard/settings/general) of the account you want to ship to. |
 | REGION | Two-letter region code, or blank for US East (Northern Virginia). This determnies your listener URL (where you're shipping the logs to). <br> You can find your region code in the [Regions and URLs](https://docs.logz.io/user-guide/accounts/account-region.html#regions-and-urls) table. |
 | GRPC_STORAGE_PLUGIN_LOG_LEVEL	(Default: `warn`) | The lowest log level to send. From lowest to highest, log levels are `trace`, `debug`, `info`, `warn`, `error`. <br> Controls logging for Jaeger Logz.io Collector only (not Jaeger components). |
+
+###### Ports description
+| Port Number | Description |
+|---|---|
+| 14268 | HTTP protocol. The collector can accept spans directly from clients in jaeger.thrift format over binary thrift protocol |
+| 9411 | HTTP protocol. The collector can accept Zipkin spans in Thrift, JSON and Proto (disabled by default) |
+| 14269 | HTTP protocol. This is the admin port: health check at `/` and metrics at `/metrics` |
+| 14250 | gRPC protocol. This port is used by jaeger-agent to send spans in model.proto format |
 
 ##### 3. Run Jaeger query
 
