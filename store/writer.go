@@ -3,11 +3,11 @@ package store
 import (
 	"encoding/json"
 	"fmt"
-	"jaeger-logzio/store/objects"
 	"strings"
 	"time"
 
 	"github.com/jaegertracing/jaeger/pkg/cache"
+	"github.com/logzio/jaeger-logzio/store/objects"
 
 	"github.com/logzio/logzio-go"
 

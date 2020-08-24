@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"jaeger-logzio/store/objects"
+	"github.com/logzio/jaeger-logzio/store/objects"
 	"time"
 
 	"github.com/jaegertracing/jaeger/storage/spanstore"

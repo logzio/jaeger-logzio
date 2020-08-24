@@ -2,7 +2,7 @@ package main
 
 import (
 	"flag"
-	"jaeger-logzio/store"
+	"github.com/logzio/jaeger-logzio/store"
 	"os"
 
 	"github.com/hashicorp/go-hclog"

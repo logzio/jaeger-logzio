@@ -205,7 +205,7 @@ go build
 #### Clone and build jaeger all in one binary:
 
 Follow the [Getting Started](https://github.com/jaegertracing/jaeger/blob/master/CONTRIBUTING.md#getting-started) from the Jaeger's repo.
-Build the Jaeger all-in-one binary:
+Build the Jaeger all-in-one binary or download it from the [Jaeger releases page](https://github.com/jaegertracing/jaeger/releases):
 
 **NOTE**: If you intend to run the generated binary file from the build on a unix base system, set this env variable first:`export GOOS=linux`
 
