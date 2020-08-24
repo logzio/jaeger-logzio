@@ -1,4 +1,4 @@
-module jaeger-logzio
+module github.com/logzio/jaeger-logzio
 
 go 1.12
 
