@@ -3,11 +3,11 @@ package store
 import (
 	"context"
 	"fmt"
-	"jaeger-logzio/store/objects"
 	"math"
 	"time"
 
 	"github.com/jaegertracing/jaeger/storage/spanstore"
+	"github.com/logzio/jaeger-logzio/store/objects"
 	"github.com/opentracing/opentracing-go"
 
 	"github.com/avast/retry-go"

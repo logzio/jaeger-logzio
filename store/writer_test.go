@@ -3,13 +3,13 @@ package store
 import (
 	"encoding/json"
 	"io/ioutil"
-	"jaeger-logzio/store/objects"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/logzio/jaeger-logzio/store/objects"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/hashicorp/go-hclog"
