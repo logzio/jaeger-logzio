@@ -59,7 +59,7 @@ func checkRecordedRequestAndGetBody(tester *testing.T, requestCount int) string 
 func TestGetTrace(tester *testing.T) {
 	_, _ = reader.GetTrace(context.Background(), model.TraceID{Low: 1, High: 0})
 	reqBody := checkRecordedRequestAndGetBody(tester, 1)
-	assert.True(tester, strings.Contains(reqBody, "\"traceID\":\"1\""), "trace id incorrect or not exist")
+	assert.True(tester, strings.Contains(reqBody, "\"traceID\":\"0000000000000001\""), "trace id incorrect or not exist")
 }
 
 func TestGetServices(tester *testing.T) {
@@ -69,7 +69,10 @@ func TestGetServices(tester *testing.T) {
 }
 
 func TestGetOperations(tester *testing.T) {
-	_, _ = reader.GetOperations(context.Background(), testService)
+	queryParam := spanstore.OperationQueryParameters{
+		ServiceName: testService,
+	}
+	_, _ = reader.GetOperations(context.Background(), queryParam)
 	reqBody := checkRecordedRequestAndGetBody(tester, 1)
 	assert.True(tester, strings.Contains(reqBody, "\"field\":\"operationName\""), "operationName field is not in request")
 	assert.True(tester, strings.Contains(reqBody, fmt.Sprintf("{\"term\":{\"serviceName\":\"%s\"}}", testService)), "service filter is incorrect or not exist")
@@ -93,8 +96,8 @@ func TestFindTraces(tester *testing.T) {
 			fmt.Sprintf("{\"range\":{\"startTime\":{\"from\":%d,\"include_lower\":true,\"include_upper\":true,\"to\":%d}}}", minTime, maxTime)),
 		"request time range is incorrect or not exist")
 
-	assert.True(tester, strings.Contains(reqBody, "{\"term\":{\"traceID\":\"42\"}"), "missing traceID term for trace id 42")
-	assert.True(tester, strings.Contains(reqBody, "{\"term\":{\"traceID\":\"314\"}"), "missing traceID term for trace id 314")
+	assert.True(tester, strings.Contains(reqBody, "{\"term\":{\"traceID\":\"0000000000000042\"}"), "missing traceID term for trace id 42")
+	assert.True(tester, strings.Contains(reqBody, "{\"term\":{\"traceID\":\"0000000000000314\"}"), "missing traceID term for trace id 314")
 }
 
 func TestFindTraceIDs(tester *testing.T) {
