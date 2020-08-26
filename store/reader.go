@@ -132,10 +132,23 @@ func (reader *LogzioSpanReader) GetServices(ctx context.Context) ([]string, erro
 }
 
 // GetOperations returns an array of all the operations a specific service performed
-func (reader *LogzioSpanReader) GetOperations(ctx context.Context, service string) ([]string, error) {
+func  (reader *LogzioSpanReader) GetOperations(ctx context.Context, query spanstore.OperationQueryParameters) ([]spanstore.Operation, error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "GetOperations")
 	defer span.Finish()
-	return reader.serviceOperationStorage.getOperations(ctx, service)
+	operations, err := reader.serviceOperationStorage.getOperations(ctx, query.ServiceName)
+	if err != nil {
+		return nil, err
+	}
+
+	var result []spanstore.Operation
+	for _, operation := range operations {
+		result = append(result, spanstore.Operation{
+			Name: operation,
+		})
+	}
+	return result, err
+
+
 }
 
 // FindTraces return an array of Jaeger traces by a search query
