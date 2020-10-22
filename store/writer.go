@@ -1,6 +1,7 @@
 package store
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -68,7 +69,7 @@ func NewLogzioSpanWriter(config LogzioConfig, logger hclog.Logger) (*LogzioSpanW
 }
 
 // WriteSpan receives a Jaeger span, converts it to logzio span and sends it to logzio
-func (spanWriter *LogzioSpanWriter) WriteSpan(span *model.Span) error {
+func (spanWriter *LogzioSpanWriter) WriteSpan(ctx context.Context, span *model.Span) error{
 	span.Tags = spanWriter.dropEmptyTags(span.Tags)
 	span.Process.Tags = spanWriter.dropEmptyTags(span.Process.Tags)
 	spanBytes, err := objects.TransformToLogzioSpanBytes(span)

@@ -251,7 +251,7 @@ func (reader *LogzioSpanReader) getMultiSearchResult(requestBody string) (elasti
 }
 
 // GetDependencies returns an array of all the dependencies in a specific time range
-func (*LogzioSpanReader) GetDependencies(endTs time.Time, lookback time.Duration) ([]model.DependencyLink, error) {
+func (*LogzioSpanReader) GetDependencies(ctx context.Context, endTs time.Time, lookback time.Duration) ([]model.DependencyLink, error) {
 	return nil, nil
 }
 
