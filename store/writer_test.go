@@ -1,6 +1,7 @@
 package store
 
 import (
+	"context"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -48,7 +49,7 @@ func TestWriteSpan(tester *testing.T) {
 	}
 
 	writer, _ := NewLogzioSpanWriter(LogzioConfig{AccountToken: testAccountToken, CustomListenerURL: server.URL}, logger)
-	assert.NoError(tester, writer.WriteSpan(span))
+	assert.NoError(tester, writer.WriteSpan(context.Background(), span))
 
 	time.Sleep(time.Second * 6)
 	requests := strings.Split(string(recordedRequests), "\n")
@@ -95,7 +96,7 @@ func TestDropEmptyTags(tester *testing.T) {
 		Process: model.NewProcess(testService, tags),
 	}
 	writer, _ := NewLogzioSpanWriter(LogzioConfig{AccountToken: testAccountToken, CustomListenerURL: server.URL}, logger)
-	assert.NoError(tester, writer.WriteSpan(span))
+	assert.NoError(tester, writer.WriteSpan(context.Background(), span))
 
 	time.Sleep(time.Second * 6)
 	requests := strings.Split(string(recordedRequests), "\n")

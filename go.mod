@@ -12,7 +12,7 @@ require (
 	github.com/go-ole/go-ole v1.2.4 // indirect
 	github.com/gogo/googleapis v1.2.0 // indirect
 	github.com/hashicorp/go-hclog v0.14.0
-	github.com/jaegertracing/jaeger v1.18.1
+	github.com/jaegertracing/jaeger v1.20.0
 	github.com/logzio/logzio-go v0.0.0-20190421083739-334c774b7aeb
 	github.com/mailru/easyjson v0.7.6 // indirect
 	github.com/olivere/elastic v6.2.34+incompatible
@@ -23,8 +23,8 @@ require (
 	github.com/spf13/cobra v0.0.5 // indirect
 	github.com/spf13/viper v1.6.2
 	github.com/stretchr/objx v0.2.0 // indirect
-	github.com/stretchr/testify v1.5.0
+	github.com/stretchr/testify v1.5.1
 	github.com/syndtr/goleveldb v1.0.0 // indirect
 	github.com/uber/tchannel-go v1.16.0 // indirect
-	gopkg.in/yaml.v2 v2.2.8
+	gopkg.in/yaml.v2 v2.3.0
 )
