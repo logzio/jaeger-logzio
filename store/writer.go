@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -49,9 +50,9 @@ func NewLogzioSpanWriter(config LogzioConfig, logger hclog.Logger) (*LogzioSpanW
 		config.AccountToken,
 		logzio.SetUrl(config.ListenerURL()),
 		logzio.SetDebug(&loggerWriter{logger: logger}),
-		logzio.SetDrainDiskThreshold(dropLogsDiskThreshold)),
-		logzio.SetTempDirectory(fmt.Sprintf("%s%s%s%s%s%s%d", os.Getenv("HOME"), string(os.PathSeparator),"tmp",string(os.PathSeparator), "logzio-buffer", string(os.PathSeparator), time.Now().UnixNano()))
-
+		logzio.SetDrainDiskThreshold(dropLogsDiskThreshold),
+		logzio.SetTempDirectory(fmt.Sprintf("%s%s%s%s%s%s%d", os.Getenv("HOME"), string(os.PathSeparator),"tmp",string(os.PathSeparator), "logzio-buffer", string(os.PathSeparator), time.Now().UnixNano())),
+	)
 
 	if err != nil {
 		return nil, err
