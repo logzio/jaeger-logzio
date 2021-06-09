@@ -2,10 +2,11 @@ package store
 
 import (
 	"fmt"
-	"io/ioutil"
-	"strings"
-
 	"github.com/hashicorp/go-hclog"
+	"io/ioutil"
+	"os"
+	"strings"
+	"time"
 
 	"github.com/spf13/viper"
 
@@ -20,6 +21,7 @@ const (
 	customListenerParam = "CUSTOM_LISTENER_URL"
 	customAPIParam      = "CUSTOM_API"
 	usRegionCode        = "us"
+	customDirPathParam  = "CUSTOM_DIR_PATH"
 )
 
 // LogzioConfig struct for logzio span store
@@ -29,6 +31,8 @@ type LogzioConfig struct {
 	APIToken          string `yaml:"apiToken"`
 	CustomListenerURL string `yaml:"customListenerUrl"`
 	CustomAPIURL      string `yaml:"customAPIUrl"`
+	CustomDirPath     string `yaml:"customDirPath"`
+
 }
 
 // validate logzio config, return error if invalid
@@ -61,6 +65,7 @@ func ParseConfig(filePath string, logger hclog.Logger) (*LogzioConfig, error) {
 		v.SetDefault(regionParam, "")
 		v.SetDefault(customAPIParam, "")
 		v.SetDefault(customListenerParam, "")
+		v.SetDefault(customDirPathParam, "")
 		v.AutomaticEnv()
 
 		logzioConfig = &LogzioConfig{
@@ -69,6 +74,7 @@ func ParseConfig(filePath string, logger hclog.Logger) (*LogzioConfig, error) {
 			APIToken:          v.GetString(apiTokenParam),
 			CustomAPIURL:      v.GetString(customAPIParam),
 			CustomListenerURL: v.GetString(customListenerParam),
+			CustomDirPath: 	   v.GetString(customDirPathParam),
 		}
 	}
 
@@ -100,6 +106,13 @@ func (config *LogzioConfig) regionCode() string {
 		regionCode = fmt.Sprintf("-%s", config.Region)
 	}
 	return regionCode
+}
+
+func (config *LogzioConfig) customDirPath() string {
+	if config.CustomDirPath == "" {
+		return fmt.Sprintf("%s%s%s%s%s%s%d", os.Getenv("HOME"), string(os.PathSeparator),"tmp",string(os.PathSeparator), "logzio-buffer", string(os.PathSeparator), time.Now().UnixNano())
+	}
+	return config.CustomDirPath
 }
 
 func (config *LogzioConfig) String() string {
