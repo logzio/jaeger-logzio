@@ -1,9 +1,11 @@
 package store
 
 import (
-	"testing"
-
+	"fmt"
 	"github.com/stretchr/testify/assert"
+	"os"
+	"strings"
+	"testing"
 )
 
 const (
@@ -52,6 +54,34 @@ func TestRegion(tester *testing.T) {
 	assert.Equal(tester, config.ListenerURL(), listenerURLEu, "listener url incorrect")
 	assert.Equal(tester, config.APIURL(), apiURLEu, "api url incorrect")
 }
+
+func TestCustomDirPath(tester *testing.T) {
+	config := LogzioConfig{
+		AccountToken: testAccountToken,
+		APIToken:     testAccountToken,
+		Region:       "",
+		CustomDirPath: "",
+	}
+	valid := strings.Split(fmt.Sprintf("%s%s%s%s%s%s", os.Getenv("HOME"), string(os.PathSeparator),"tmp",string(os.PathSeparator), "logzio-buffer", string(os.PathSeparator)),string(os.PathSeparator))
+	actual:=  strings.Split(config.customDirPath(), string(os.PathSeparator))
+	for i := 0; i < len(actual)-1; i++ {
+		assert.Equal(tester, actual[i], valid[i], "custom dir path is incorrect")
+	}
+
+	config.CustomDirPath = "/tmp"
+	valid = strings.Split(fmt.Sprintf("%s%s%s%s", "/tmp",string(os.PathSeparator), "logzio-buffer", string(os.PathSeparator)),string(os.PathSeparator))
+	actual = strings.Split(config.customDirPath(), string(os.PathSeparator))
+	for i := 0; i < len(actual)-1; i++ {
+		assert.Equal(tester, actual[i], valid[i], "custom dir path is incorrect")
+	}
+	config.CustomDirPath = "/tmp/"
+	valid = strings.Split(fmt.Sprintf("%s%s%s%s", "/tmp",string(os.PathSeparator), "logzio-buffer", string(os.PathSeparator)),string(os.PathSeparator))
+	actual = strings.Split(config.customDirPath(), string(os.PathSeparator))
+	for i := 0; i < len(actual)-1; i++ {
+		assert.Equal(tester, actual[i], valid[i], "custom dir path is incorrect")
+	}
+}
+
 
 func TestParseConfig(tester *testing.T) {
 	config, err := ParseConfig("fixtures/testConfig.yaml", logger)

@@ -111,8 +111,12 @@ func (config *LogzioConfig) regionCode() string {
 func (config *LogzioConfig) customDirPath() string {
 	if config.CustomDirPath == "" {
 		return fmt.Sprintf("%s%s%s%s%s%s%d", os.Getenv("HOME"), string(os.PathSeparator),"tmp",string(os.PathSeparator), "logzio-buffer", string(os.PathSeparator), time.Now().UnixNano())
+	} else if strings.HasSuffix(config.CustomDirPath, string(os.PathSeparator)){
+		path:= config.CustomDirPath[:len(config.CustomDirPath)-len(string(os.PathSeparator))]
+		return fmt.Sprintf("%s%s%s%s%d", path,string(os.PathSeparator), "logzio-buffer", string(os.PathSeparator), time.Now().UnixNano())
+	} else {
+		return fmt.Sprintf("%s%s%s%s%d", config.CustomDirPath,string(os.PathSeparator), "logzio-buffer", string(os.PathSeparator), time.Now().UnixNano())
 	}
-	return config.CustomDirPath
 }
 
 func (config *LogzioConfig) String() string {
