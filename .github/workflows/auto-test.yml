@@ -18,6 +18,8 @@ jobs:
 
     - name: cd
       run: cd store
+    - name: pwd
+      run: pwd
 
     - name: Test
       run: go test
