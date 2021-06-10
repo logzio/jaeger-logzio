@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"os"
+	"strings"
 	"testing"
 )
 
@@ -54,25 +55,31 @@ func TestRegion(tester *testing.T) {
 	assert.Equal(tester, config.APIURL(), apiURLEu, "api url incorrect")
 }
 
-func TestCustomQueueDir(tester *testing.T) {
+func TestCustomDirPath(tester *testing.T) {
 	config := LogzioConfig{
 		AccountToken: testAccountToken,
 		APIToken:     testAccountToken,
 		Region:       "",
-		CustomQueueDir: "",
+		CustomDirPath: "",
 	}
-	s := string(os.PathSeparator)
-	valid := fmt.Sprintf("%s%s%s%s%s%s", os.Getenv("HOME"), s,"tmp",s, "logzio-buffer", s)
-	assert.Equal(tester, config.customQueueDir(), valid, "custom dir path is incorrect")
+	valid := strings.Split(fmt.Sprintf("%s%s%s%s%s%s", os.Getenv("HOME"), string(os.PathSeparator),"tmp",string(os.PathSeparator), "logzio-buffer", string(os.PathSeparator)),string(os.PathSeparator))
+	actual:=  strings.Split(config.customDirPath(), string(os.PathSeparator))
+	for i := 0; i < len(actual)-1; i++ {
+		assert.Equal(tester, actual[i], valid[i], "custom dir path is incorrect")
+	}
 
-
-	config.CustomQueueDir = "/tmp"
-	valid = fmt.Sprintf("%s%s%s%s", "/tmp",s, "logzio-buffer", s)
-	assert.Equal(tester, config.customQueueDir(), valid, "custom dir path is incorrect")
-
-	config.CustomQueueDir = "/tmp/"
-	valid = fmt.Sprintf("%s%s%s%s", "/tmp",s, "logzio-buffer", s)
-	assert.Equal(tester, config.customQueueDir(), valid, "custom dir path is incorrect")
+	config.CustomDirPath = "/tmp"
+	valid = strings.Split(fmt.Sprintf("%s%s%s%s", "/tmp",string(os.PathSeparator), "logzio-buffer", string(os.PathSeparator)),string(os.PathSeparator))
+	actual = strings.Split(config.customDirPath(), string(os.PathSeparator))
+	for i := 0; i < len(actual)-1; i++ {
+		assert.Equal(tester, actual[i], valid[i], "custom dir path is incorrect")
+	}
+	config.CustomDirPath = "/tmp/"
+	valid = strings.Split(fmt.Sprintf("%s%s%s%s", "/tmp",string(os.PathSeparator), "logzio-buffer", string(os.PathSeparator)),string(os.PathSeparator))
+	actual = strings.Split(config.customDirPath(), string(os.PathSeparator))
+	for i := 0; i < len(actual)-1; i++ {
+		assert.Equal(tester, actual[i], valid[i], "custom dir path is incorrect")
+	}
 }
 
 
