@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
@@ -109,12 +110,12 @@ func (config *LogzioConfig) regionCode() string {
 func (config *LogzioConfig) customQueueDir() string {
 	s:= string(os.PathSeparator)
 	if config.CustomQueueDir == "" {
-		return fmt.Sprintf("%s%s%s%s%s%s", os.Getenv("HOME"), s,"tmp",s, "logzio-buffer", s)
+		return fmt.Sprintf("%s%s%s%s%s%s%d", os.Getenv("HOME"), s,"tmp",s, "logzio-buffer", s, time.Now().UnixNano())
 	} else if strings.HasSuffix(config.CustomQueueDir, s){
 		path:= config.CustomQueueDir[:len(config.CustomQueueDir)-len(s)]
-		return fmt.Sprintf("%s%s%s%s", path,s, "logzio-buffer", s)
+		return fmt.Sprintf("%s%s%s%s%d", path,s, "logzio-buffer", s, time.Now().UnixNano())
 	} else {
-		return fmt.Sprintf("%s%s%s%s", config.CustomQueueDir,s, "logzio-buffer", s)
+		return fmt.Sprintf("%s%s%s%s%d", config.CustomQueueDir,s, "logzio-buffer", s, time.Now().UnixNano())
 	}
 }
 

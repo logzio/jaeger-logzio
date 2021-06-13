@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"os"
+	"strings"
 	"testing"
 )
 
@@ -62,17 +63,23 @@ func TestCustomQueueDir(tester *testing.T) {
 		CustomQueueDir: "",
 	}
 	s := string(os.PathSeparator)
-	valid := fmt.Sprintf("%s%s%s%s%s%s", os.Getenv("HOME"), s,"tmp",s, "logzio-buffer", s)
-	assert.Equal(tester, config.customQueueDir(), valid, "custom dir path is incorrect")
-
-
+	valid := strings.Split(fmt.Sprintf("%s%s%s%s%s%s", os.Getenv("HOME"), s,"tmp",s, "logzio-buffer", s),s)
+	actual:=  strings.Split(config.customQueueDir(), s)
+	for i := 0; i < len(actual)-1; i++ {
+		assert.Equal(tester, actual[i], valid[i], "custom dir path is incorrect")
+	}
 	config.CustomQueueDir = "/tmp"
-	valid = fmt.Sprintf("%s%s%s%s", "/tmp",s, "logzio-buffer", s)
-	assert.Equal(tester, config.customQueueDir(), valid, "custom dir path is incorrect")
-
+	valid = strings.Split(fmt.Sprintf("%s%s%s%s", "/tmp",s, "logzio-buffer", s),s)
+	actual = strings.Split(config.customQueueDir(), s)
+	for i := 0; i < len(actual)-1; i++ {
+		assert.Equal(tester, actual[i], valid[i], "custom dir path is incorrect")
+	}
 	config.CustomQueueDir = "/tmp/"
-	valid = fmt.Sprintf("%s%s%s%s", "/tmp",s, "logzio-buffer", s)
-	assert.Equal(tester, config.customQueueDir(), valid, "custom dir path is incorrect")
+	valid = strings.Split(fmt.Sprintf("%s%s%s%s", "/tmp",s, "logzio-buffer", s),s)
+	actual = strings.Split(config.customQueueDir(), s)
+	for i := 0; i < len(actual)-1; i++ {
+		assert.Equal(tester, actual[i], valid[i], "custom dir path is incorrect")
+	}
 }
 
 
