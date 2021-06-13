@@ -48,7 +48,8 @@ func (config *LogzioConfig) validate(logger hclog.Logger) error {
 	}
 	if config.CustomQueueDir != "" {
 		if unix.Access(config.CustomQueueDir, unix.W_OK) != nil{
-			return errors.New("The directory is not writeable")
+			errMessage := fmt.Sprintf("%s directory is not writeable",config.CustomQueueDir)
+			return errors.New(errMessage)
 		}
 	}
 	return nil
