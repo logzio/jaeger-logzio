@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/hashicorp/go-hclog"
 	"github.com/spf13/viper"
+	"golang.org/x/sys/unix"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -20,7 +21,7 @@ const (
 	customListenerParam = "CUSTOM_LISTENER_URL"
 	customAPIParam      = "CUSTOM_API"
 	usRegionCode        = "us"
-	customQueueDirParam  = "CUSTOM_QUEUE_PATH"
+	customQueueDirParam = "CUSTOM_QUEUE_DIR"
 )
 
 // LogzioConfig struct for logzio span store
@@ -30,7 +31,7 @@ type LogzioConfig struct {
 	APIToken          string `yaml:"apiToken"`
 	CustomListenerURL string `yaml:"customListenerUrl"`
 	CustomAPIURL      string `yaml:"customAPIUrl"`
-	CustomQueueDir     string `yaml:"customQueueDir"`
+	CustomQueueDir    string `yaml:"customQueueDir"`
 
 }
 
@@ -44,6 +45,11 @@ func (config *LogzioConfig) validate(logger hclog.Logger) error {
 	}
 	if config.AccountToken == "" {
 		logger.Warn("No account token found, spans will not be saved")
+	}
+	if config.CustomQueueDir != "" {
+		if unix.Access(config.CustomQueueDir, unix.W_OK) != nil{
+			return errors.New("The directory is not writeable")
+		}
 	}
 	return nil
 }

@@ -34,6 +34,14 @@ func TestValidate(tester *testing.T) {
 	config.APIToken = ""
 	assert.NoError(tester, config.validate(logger), "validation failed, one of api token or account token can be empty")
 
+	config.CustomQueueDir = fmt.Sprintf("%s/tmp",os.Getenv("HOME"))
+	assert.NoError(tester, config.validate(logger), "validation failed, the directory is not writeable")
+
+	config.CustomQueueDir = fmt.Sprintf("%s/notexist",os.Getenv("HOME"))
+	assert.Error(tester, config.validate(logger), "validation failed, the directory does not exist")
+
+
+
 }
 
 func TestRegion(tester *testing.T) {
