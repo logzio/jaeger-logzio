@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"github.com/jaegertracing/jaeger/plugin/storage/grpc/shared"
 	"github.com/logzio/jaeger-logzio/store"
 	"os"
 
@@ -29,9 +30,10 @@ func main() {
 		logger.Error("can't parse config: ", err.Error())
 		os.Exit(0)
 	}
-
 	logger.Info(logzioConfig.String())
 	logzioStore := store.NewLogzioStore(*logzioConfig, logger)
-	grpc.Serve(logzioStore)
+	grpc.Serve(&shared.PluginServices{
+		Store: logzioStore,
+	})
 	logzioStore.Close()
 }

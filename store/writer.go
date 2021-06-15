@@ -49,7 +49,9 @@ func NewLogzioSpanWriter(config LogzioConfig, logger hclog.Logger) (*LogzioSpanW
 		config.AccountToken,
 		logzio.SetUrl(config.ListenerURL()),
 		logzio.SetDebug(&loggerWriter{logger: logger}),
-		logzio.SetDrainDiskThreshold(dropLogsDiskThreshold))
+		logzio.SetDrainDiskThreshold(dropLogsDiskThreshold),
+		logzio.SetTempDirectory(config.customQueueDir()),
+	)
 
 	if err != nil {
 		return nil, err

@@ -124,6 +124,7 @@ logzio/jaeger-logzio-collector:latest
 | REGION | Two-letter region code, or blank for US East (Northern Virginia). This determnies your listener URL (where you're shipping the logs to). <br> You can find your region code in the [Regions and URLs](https://docs.logz.io/user-guide/accounts/account-region.html#regions-and-urls) table. |
 | GRPC_STORAGE_PLUGIN_LOG_LEVEL	(Default: `warn`) | The lowest log level to send. From lowest to highest, log levels are `trace`, `debug`, `info`, `warn`, `error`. <br> Controls logging for Jaeger Logz.io Collector only (not Jaeger components). |
 
+
 ###### Ports description
 | Port Number | Description |
 |---|---|
@@ -193,6 +194,14 @@ you can override region settings by using these environment variables.
 | CUSTOM_LISTENER_URL	| Set a custom URL to ship logs to (e.g., `http://localhost:9200`). This overrides the `REGION` environment variable. |
 | CUSTOM_API | Set a custom API URL (e.g., `http://localhost:9200/_msearch`). This overrides the `REGION` environment variable. |
 
+## Customizing local storage
+
+You can also specify a custom directory to store the queue in
+
+| Parameter | Description |
+|---|---|
+| CUSTOM_QUEUE_DIR| Path to a directory you want to store the queue in, the default value is `$HOME/tmp`|
+
 ## Run go binary with bash
 
 Clone this repo and change config.yaml to fit your Logz.io account parameters.
@@ -235,6 +244,9 @@ docker run --rm -it \
 Then navigate to http://localhost:8080 .
 
 ### Changelog
+ - v1.0.1
+    - Support for custom queue directory
+
  - v1.0.0 - **Breaking Changes**
     - Support for searching traces by tags is affected by the introduction of new tags.
     - Static image versions of Jaeger components (1.18)

@@ -2,12 +2,13 @@ package store
 
 import (
 	"fmt"
-	"io/ioutil"
-	"strings"
-
 	"github.com/hashicorp/go-hclog"
-
 	"github.com/spf13/viper"
+	"golang.org/x/sys/unix"
+	"io/ioutil"
+	"os"
+	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
@@ -20,6 +21,7 @@ const (
 	customListenerParam = "CUSTOM_LISTENER_URL"
 	customAPIParam      = "CUSTOM_API"
 	usRegionCode        = "us"
+	customQueueDirParam = "CUSTOM_QUEUE_DIR"
 )
 
 // LogzioConfig struct for logzio span store
@@ -29,6 +31,8 @@ type LogzioConfig struct {
 	APIToken          string `yaml:"apiToken"`
 	CustomListenerURL string `yaml:"customListenerUrl"`
 	CustomAPIURL      string `yaml:"customAPIUrl"`
+	CustomQueueDir    string `yaml:"customQueueDir"`
+
 }
 
 // validate logzio config, return error if invalid
@@ -41,6 +45,12 @@ func (config *LogzioConfig) validate(logger hclog.Logger) error {
 	}
 	if config.AccountToken == "" {
 		logger.Warn("No account token found, spans will not be saved")
+	}
+	if config.CustomQueueDir != "" {
+		if unix.Access(config.CustomQueueDir, unix.W_OK) != nil{
+			errMessage := fmt.Sprintf("%s directory is not writeable",config.CustomQueueDir)
+			return errors.New(errMessage)
+		}
 	}
 	return nil
 }
@@ -61,6 +71,7 @@ func ParseConfig(filePath string, logger hclog.Logger) (*LogzioConfig, error) {
 		v.SetDefault(regionParam, "")
 		v.SetDefault(customAPIParam, "")
 		v.SetDefault(customListenerParam, "")
+		v.SetDefault(customQueueDirParam, "")
 		v.AutomaticEnv()
 
 		logzioConfig = &LogzioConfig{
@@ -69,6 +80,7 @@ func ParseConfig(filePath string, logger hclog.Logger) (*LogzioConfig, error) {
 			APIToken:          v.GetString(apiTokenParam),
 			CustomAPIURL:      v.GetString(customAPIParam),
 			CustomListenerURL: v.GetString(customListenerParam),
+			CustomQueueDir:    v.GetString(customQueueDirParam),
 		}
 	}
 
@@ -100,6 +112,18 @@ func (config *LogzioConfig) regionCode() string {
 		regionCode = fmt.Sprintf("-%s", config.Region)
 	}
 	return regionCode
+}
+
+func (config *LogzioConfig) customQueueDir() string {
+	s:= string(os.PathSeparator)
+	if config.CustomQueueDir == "" {
+		return fmt.Sprintf("%s%s%s%s%s%s%d", os.Getenv("HOME"), s,"tmp",s, "logzio-buffer", s, time.Now().UnixNano())
+	} else if strings.HasSuffix(config.CustomQueueDir, s){
+		path:= config.CustomQueueDir[:len(config.CustomQueueDir)-len(s)]
+		return fmt.Sprintf("%s%s%s%s%d", path,s, "logzio-buffer", s, time.Now().UnixNano())
+	} else {
+		return fmt.Sprintf("%s%s%s%s%d", config.CustomQueueDir,s, "logzio-buffer", s, time.Now().UnixNano())
+	}
 }
 
 func (config *LogzioConfig) String() string {

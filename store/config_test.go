@@ -1,9 +1,11 @@
 package store
 
 import (
-	"testing"
-
+	"fmt"
 	"github.com/stretchr/testify/assert"
+	"os"
+	"strings"
+	"testing"
 )
 
 const (
@@ -32,6 +34,14 @@ func TestValidate(tester *testing.T) {
 	config.APIToken = ""
 	assert.NoError(tester, config.validate(logger), "validation failed, one of api token or account token can be empty")
 
+	config.CustomQueueDir = fmt.Sprintf("%s",os.Getenv("HOME"))
+	assert.NoError(tester, config.validate(logger), "validation failed, the directory is not writeable")
+
+	config.CustomQueueDir = fmt.Sprintf("%s/notexist",os.Getenv("HOME"))
+	assert.Error(tester, config.validate(logger), "validation failed, the directory does not exist")
+
+
+
 }
 
 func TestRegion(tester *testing.T) {
@@ -52,6 +62,34 @@ func TestRegion(tester *testing.T) {
 	assert.Equal(tester, config.ListenerURL(), listenerURLEu, "listener url incorrect")
 	assert.Equal(tester, config.APIURL(), apiURLEu, "api url incorrect")
 }
+
+func TestCustomQueueDir(tester *testing.T) {
+	config := LogzioConfig{
+		AccountToken: testAccountToken,
+		APIToken:     testAccountToken,
+		Region:       "",
+		CustomQueueDir: "",
+	}
+	s := string(os.PathSeparator)
+	valid := strings.Split(fmt.Sprintf("%s%s%s%s%s%s", os.Getenv("HOME"), s,"tmp",s, "logzio-buffer", s),s)
+	actual:=  strings.Split(config.customQueueDir(), s)
+	for i := 0; i < len(actual)-1; i++ {
+		assert.Equal(tester, actual[i], valid[i], "custom dir path is incorrect")
+	}
+	config.CustomQueueDir = "/tmp"
+	valid = strings.Split(fmt.Sprintf("%s%s%s%s", "/tmp",s, "logzio-buffer", s),s)
+	actual = strings.Split(config.customQueueDir(), s)
+	for i := 0; i < len(actual)-1; i++ {
+		assert.Equal(tester, actual[i], valid[i], "custom dir path is incorrect")
+	}
+	config.CustomQueueDir = "/tmp/"
+	valid = strings.Split(fmt.Sprintf("%s%s%s%s", "/tmp",s, "logzio-buffer", s),s)
+	actual = strings.Split(config.customQueueDir(), s)
+	for i := 0; i < len(actual)-1; i++ {
+		assert.Equal(tester, actual[i], valid[i], "custom dir path is incorrect")
+	}
+}
+
 
 func TestParseConfig(tester *testing.T) {
 	config, err := ParseConfig("fixtures/testConfig.yaml", logger)
