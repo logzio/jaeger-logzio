@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/hashicorp/go-hclog"
 	"github.com/spf13/viper"
-	"golang.org/x/sys/unix"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -47,8 +46,8 @@ func (config *LogzioConfig) validate(logger hclog.Logger) error {
 		logger.Warn("No account token found, spans will not be saved")
 	}
 	if config.CustomQueueDir != "" {
-		if unix.Access(config.CustomQueueDir, unix.W_OK) != nil{
-			errMessage := fmt.Sprintf("%s directory is not writeable",config.CustomQueueDir)
+		if _, err := os.Stat(config.CustomQueueDir); os.IsNotExist(err){
+			errMessage := fmt.Sprintf("%s directory does not exist",config.CustomQueueDir)
 			return errors.New(errMessage)
 		}
 	}
