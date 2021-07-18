@@ -53,6 +53,8 @@ func NewLogzioSpanWriter(config LogzioConfig, logger hclog.Logger) (*LogzioSpanW
 		logzio.SetTempDirectory(config.customQueueDir()),
 		logzio.SetCompress(config.Compress),
 		logzio.SetInMemoryQueue(config.InMemoryQueue),
+		logzio.SetlogCountLimit(config.LogCountLimit),
+		logzio.SetinMemoryCapacity(config.InMemoryCapacity),
 	)
 
 	if err != nil {

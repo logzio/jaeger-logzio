@@ -14,15 +14,17 @@ import (
 )
 
 const (
-	accountTokenParam   = "ACCOUNT_TOKEN"
-	apiTokenParam       = "API_TOKEN"
-	regionParam         = "REGION"
-	customListenerParam = "CUSTOM_LISTENER_URL"
-	customAPIParam      = "CUSTOM_API"
-	usRegionCode        = "us"
-	customQueueDirParam = "CUSTOM_QUEUE_DIR"
-	inMemoryQueueParam  = "IN_MEMORY_QUEUE"
-	Compress            = "COMPRESS"
+	accountTokenParam     = "ACCOUNT_TOKEN"
+	apiTokenParam         = "API_TOKEN"
+	regionParam           = "REGION"
+	customListenerParam   = "CUSTOM_LISTENER_URL"
+	customAPIParam        = "CUSTOM_API"
+	usRegionCode          = "us"
+	customQueueDirParam   = "CUSTOM_QUEUE_DIR"
+	inMemoryQueueParam    = "IN_MEMORY_QUEUE"
+	CompressParam         = "COMPRESS"
+	InMemoryCapacityParam = "IN_MEMORY_CAPACITY"
+	LogCountLimitParam    = "LOG_COUNT_LIMIT"
 )
 
 // LogzioConfig struct for logzio span store
@@ -35,6 +37,8 @@ type LogzioConfig struct {
 	CustomQueueDir    string `yaml:"customQueueDir"`
 	InMemoryQueue     bool   `yaml:"inMemoryQueue"`
 	Compress          bool   `yaml:"Compress"`
+	InMemoryCapacity  uint64 `yaml:"InMemoryCapacity"`
+	LogCountLimit     int    `yaml:"LogCountLimit"`
 }
 
 // validate logzio config, return error if invalid
@@ -75,7 +79,9 @@ func ParseConfig(filePath string, logger hclog.Logger) (*LogzioConfig, error) {
 		v.SetDefault(customListenerParam, "")
 		v.SetDefault(customQueueDirParam, "")
 		v.SetDefault(inMemoryQueueParam, false)
-		v.SetDefault(Compress, true)
+		v.SetDefault(CompressParam, true)
+		v.SetDefault(InMemoryCapacityParam, 20*1024*1024)
+		v.SetDefault(LogCountLimitParam, 500000)
 		v.AutomaticEnv()
 
 		logzioConfig = &LogzioConfig{
@@ -86,7 +92,9 @@ func ParseConfig(filePath string, logger hclog.Logger) (*LogzioConfig, error) {
 			CustomListenerURL: v.GetString(customListenerParam),
 			CustomQueueDir:    v.GetString(customQueueDirParam),
 			InMemoryQueue:     v.GetBool(inMemoryQueueParam),
-			Compress:          v.GetBool(Compress),
+			Compress:          v.GetBool(CompressParam),
+			InMemoryCapacity:  v.GetUint64(InMemoryCapacityParam),
+			LogCountLimit:     v.GetInt(LogCountLimitParam),
 		}
 	}
 
