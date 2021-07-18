@@ -71,6 +71,11 @@ func ParseConfig(filePath string, logger hclog.Logger) (*LogzioConfig, error) {
 			return nil, err
 		}
 		err = yaml.Unmarshal(yamlFile, &logzioConfig)
+		// Set default values
+		logzioConfig.LogCountLimit = 500000
+		logzioConfig.Compress = true
+		logzioConfig.InMemoryCapacity = 20 * 1024 * 1024
+		logzioConfig.InMemoryQueue = false
 	} else {
 		v := viper.New()
 		v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))

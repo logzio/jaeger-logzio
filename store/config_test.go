@@ -2,6 +2,7 @@ package store
 
 import (
 	"fmt"
+	"github.com/hashicorp/go-hclog"
 	"github.com/stretchr/testify/assert"
 	"os"
 	"strings"
@@ -42,6 +43,19 @@ func TestValidate(tester *testing.T) {
 
 }
 
+func TestDefaultValues(tester *testing.T) {
+	logger := hclog.New(&hclog.LoggerOptions{
+		Level:      hclog.Debug,
+		Name:       "fake-logger",
+		JSONFormat: true,
+	})
+	logzioConfig, _ := ParseConfig("../config.yaml", logger)
+	assert.Equal(tester, logzioConfig.LogCountLimit, 500000)
+	assert.Equal(tester, logzioConfig.InMemoryQueue, false)
+	assert.Equal(tester, logzioConfig.InMemoryCapacity, uint64(20*1024*1024))
+	assert.Equal(tester, logzioConfig.Compress, true)
+
+}
 func TestRegion(tester *testing.T) {
 	config := LogzioConfig{
 		AccountToken: testAccountToken,
