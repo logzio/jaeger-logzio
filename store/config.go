@@ -21,6 +21,7 @@ const (
 	customAPIParam      = "CUSTOM_API"
 	usRegionCode        = "us"
 	customQueueDirParam = "CUSTOM_QUEUE_DIR"
+	inMemoryQueueParam  = "IN_MEMORY_QUEUE"
 )
 
 // LogzioConfig struct for logzio span store
@@ -31,7 +32,7 @@ type LogzioConfig struct {
 	CustomListenerURL string `yaml:"customListenerUrl"`
 	CustomAPIURL      string `yaml:"customAPIUrl"`
 	CustomQueueDir    string `yaml:"customQueueDir"`
-
+	InMemoryQueue     bool   `yaml:"inMemoryQueue"`
 }
 
 // validate logzio config, return error if invalid
@@ -46,8 +47,8 @@ func (config *LogzioConfig) validate(logger hclog.Logger) error {
 		logger.Warn("No account token found, spans will not be saved")
 	}
 	if config.CustomQueueDir != "" {
-		if _, err := os.Stat(config.CustomQueueDir); os.IsNotExist(err){
-			errMessage := fmt.Sprintf("%s directory does not exist",config.CustomQueueDir)
+		if _, err := os.Stat(config.CustomQueueDir); os.IsNotExist(err) {
+			errMessage := fmt.Sprintf("%s directory does not exist", config.CustomQueueDir)
 			return errors.New(errMessage)
 		}
 	}
@@ -71,6 +72,7 @@ func ParseConfig(filePath string, logger hclog.Logger) (*LogzioConfig, error) {
 		v.SetDefault(customAPIParam, "")
 		v.SetDefault(customListenerParam, "")
 		v.SetDefault(customQueueDirParam, "")
+		v.SetDefault(inMemoryQueueParam, false)
 		v.AutomaticEnv()
 
 		logzioConfig = &LogzioConfig{
@@ -80,6 +82,7 @@ func ParseConfig(filePath string, logger hclog.Logger) (*LogzioConfig, error) {
 			CustomAPIURL:      v.GetString(customAPIParam),
 			CustomListenerURL: v.GetString(customListenerParam),
 			CustomQueueDir:    v.GetString(customQueueDirParam),
+			InMemoryQueue:     v.GetBool(inMemoryQueueParam),
 		}
 	}
 
@@ -114,14 +117,14 @@ func (config *LogzioConfig) regionCode() string {
 }
 
 func (config *LogzioConfig) customQueueDir() string {
-	s:= string(os.PathSeparator)
+	s := string(os.PathSeparator)
 	if config.CustomQueueDir == "" {
-		return fmt.Sprintf("%s%s%s%s%s%s%d", os.Getenv("HOME"), s,"tmp",s, "logzio-buffer", s, time.Now().UnixNano())
-	} else if strings.HasSuffix(config.CustomQueueDir, s){
-		path:= config.CustomQueueDir[:len(config.CustomQueueDir)-len(s)]
-		return fmt.Sprintf("%s%s%s%s%d", path,s, "logzio-buffer", s, time.Now().UnixNano())
+		return fmt.Sprintf("%s%s%s%s%s%s%d", os.Getenv("HOME"), s, "tmp", s, "logzio-buffer", s, time.Now().UnixNano())
+	} else if strings.HasSuffix(config.CustomQueueDir, s) {
+		path := config.CustomQueueDir[:len(config.CustomQueueDir)-len(s)]
+		return fmt.Sprintf("%s%s%s%s%d", path, s, "logzio-buffer", s, time.Now().UnixNano())
 	} else {
-		return fmt.Sprintf("%s%s%s%s%d", config.CustomQueueDir,s, "logzio-buffer", s, time.Now().UnixNano())
+		return fmt.Sprintf("%s%s%s%s%d", config.CustomQueueDir, s, "logzio-buffer", s, time.Now().UnixNano())
 	}
 }
 
