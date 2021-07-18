@@ -22,6 +22,7 @@ const (
 	usRegionCode        = "us"
 	customQueueDirParam = "CUSTOM_QUEUE_DIR"
 	inMemoryQueueParam  = "IN_MEMORY_QUEUE"
+	Compress            = "COMPRESS"
 )
 
 // LogzioConfig struct for logzio span store
@@ -33,6 +34,7 @@ type LogzioConfig struct {
 	CustomAPIURL      string `yaml:"customAPIUrl"`
 	CustomQueueDir    string `yaml:"customQueueDir"`
 	InMemoryQueue     bool   `yaml:"inMemoryQueue"`
+	Compress          bool   `yaml:"Compress"`
 }
 
 // validate logzio config, return error if invalid
@@ -73,6 +75,7 @@ func ParseConfig(filePath string, logger hclog.Logger) (*LogzioConfig, error) {
 		v.SetDefault(customListenerParam, "")
 		v.SetDefault(customQueueDirParam, "")
 		v.SetDefault(inMemoryQueueParam, false)
+		v.SetDefault(Compress, true)
 		v.AutomaticEnv()
 
 		logzioConfig = &LogzioConfig{
@@ -83,6 +86,7 @@ func ParseConfig(filePath string, logger hclog.Logger) (*LogzioConfig, error) {
 			CustomListenerURL: v.GetString(customListenerParam),
 			CustomQueueDir:    v.GetString(customQueueDirParam),
 			InMemoryQueue:     v.GetBool(inMemoryQueueParam),
+			Compress:          v.GetBool(Compress),
 		}
 	}
 
@@ -119,7 +123,7 @@ func (config *LogzioConfig) regionCode() string {
 func (config *LogzioConfig) customQueueDir() string {
 	s := string(os.PathSeparator)
 	if config.CustomQueueDir == "" {
-		return fmt.Sprintf("%s%s%s%s%s%s%d", os.Getenv("HOME"), s, "tmp", s, "logzio-buffer", s, time.Now().UnixNano())
+		return fmt.Sprintf("%s%s%s%s%d", os.TempDir(), s, "logzio-buffer", s, time.Now().UnixNano())
 	} else if strings.HasSuffix(config.CustomQueueDir, s) {
 		path := config.CustomQueueDir[:len(config.CustomQueueDir)-len(s)]
 		return fmt.Sprintf("%s%s%s%s%d", path, s, "logzio-buffer", s, time.Now().UnixNano())

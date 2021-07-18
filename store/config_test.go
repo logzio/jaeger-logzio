@@ -34,13 +34,11 @@ func TestValidate(tester *testing.T) {
 	config.APIToken = ""
 	assert.NoError(tester, config.validate(logger), "validation failed, one of api token or account token can be empty")
 
-	config.CustomQueueDir = fmt.Sprintf("%s",os.Getenv("HOME"))
+	config.CustomQueueDir = fmt.Sprintf("%s", os.Getenv("HOME"))
 	assert.NoError(tester, config.validate(logger), "validation failed, the directory is not writeable")
 
-	config.CustomQueueDir = fmt.Sprintf("%s/notexist",os.Getenv("HOME"))
+	config.CustomQueueDir = fmt.Sprintf("%s/notexist", os.Getenv("HOME"))
 	assert.Error(tester, config.validate(logger), "validation failed, the directory does not exist")
-
-
 
 }
 
@@ -65,31 +63,30 @@ func TestRegion(tester *testing.T) {
 
 func TestCustomQueueDir(tester *testing.T) {
 	config := LogzioConfig{
-		AccountToken: testAccountToken,
-		APIToken:     testAccountToken,
-		Region:       "",
+		AccountToken:   testAccountToken,
+		APIToken:       testAccountToken,
+		Region:         "",
 		CustomQueueDir: "",
 	}
 	s := string(os.PathSeparator)
-	valid := strings.Split(fmt.Sprintf("%s%s%s%s%s%s", os.Getenv("HOME"), s,"tmp",s, "logzio-buffer", s),s)
-	actual:=  strings.Split(config.customQueueDir(), s)
+	valid := strings.Split(fmt.Sprintf("%s%s%s%s", os.TempDir(), s, "logzio-buffer", s), s)
+	actual := strings.Split(config.customQueueDir(), s)
 	for i := 0; i < len(actual)-1; i++ {
 		assert.Equal(tester, actual[i], valid[i], "custom dir path is incorrect")
 	}
 	config.CustomQueueDir = "/tmp"
-	valid = strings.Split(fmt.Sprintf("%s%s%s%s", "/tmp",s, "logzio-buffer", s),s)
+	valid = strings.Split(fmt.Sprintf("%s%s%s%s", "/tmp", s, "logzio-buffer", s), s)
 	actual = strings.Split(config.customQueueDir(), s)
 	for i := 0; i < len(actual)-1; i++ {
 		assert.Equal(tester, actual[i], valid[i], "custom dir path is incorrect")
 	}
 	config.CustomQueueDir = "/tmp/"
-	valid = strings.Split(fmt.Sprintf("%s%s%s%s", "/tmp",s, "logzio-buffer", s),s)
+	valid = strings.Split(fmt.Sprintf("%s%s%s%s", "/tmp", s, "logzio-buffer", s), s)
 	actual = strings.Split(config.customQueueDir(), s)
 	for i := 0; i < len(actual)-1; i++ {
 		assert.Equal(tester, actual[i], valid[i], "custom dir path is incorrect")
 	}
 }
-
 
 func TestParseConfig(tester *testing.T) {
 	config, err := ParseConfig("fixtures/testConfig.yaml", logger)
