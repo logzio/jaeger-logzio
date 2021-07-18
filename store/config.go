@@ -25,6 +25,9 @@ const (
 	CompressParam         = "COMPRESS"
 	InMemoryCapacityParam = "IN_MEMORY_CAPACITY"
 	LogCountLimitParam    = "LOG_COUNT_LIMIT"
+	// default values for in memory queue config
+	defaultInMemoryCapacity = uint64(20 * 1024 * 1024)
+	defaultLogCountLimit    = 500000
 )
 
 // LogzioConfig struct for logzio span store
@@ -72,9 +75,9 @@ func ParseConfig(filePath string, logger hclog.Logger) (*LogzioConfig, error) {
 		}
 		err = yaml.Unmarshal(yamlFile, &logzioConfig)
 		// Set default values
-		logzioConfig.LogCountLimit = 500000
+		logzioConfig.LogCountLimit = defaultLogCountLimit
 		logzioConfig.Compress = true
-		logzioConfig.InMemoryCapacity = 20 * 1024 * 1024
+		logzioConfig.InMemoryCapacity = defaultInMemoryCapacity
 		logzioConfig.InMemoryQueue = false
 	} else {
 		v := viper.New()
@@ -85,8 +88,8 @@ func ParseConfig(filePath string, logger hclog.Logger) (*LogzioConfig, error) {
 		v.SetDefault(customQueueDirParam, "")
 		v.SetDefault(inMemoryQueueParam, false)
 		v.SetDefault(CompressParam, true)
-		v.SetDefault(InMemoryCapacityParam, 20*1024*1024)
-		v.SetDefault(LogCountLimitParam, 500000)
+		v.SetDefault(InMemoryCapacityParam, defaultInMemoryCapacity)
+		v.SetDefault(LogCountLimitParam, defaultLogCountLimit)
 		v.AutomaticEnv()
 
 		logzioConfig = &LogzioConfig{
@@ -131,6 +134,22 @@ func (config *LogzioConfig) regionCode() string {
 		regionCode = fmt.Sprintf("-%s", config.Region)
 	}
 	return regionCode
+}
+
+func (config *LogzioConfig) defaultLogCountLimit() int {
+	if config.LogCountLimit != 0 {
+		return config.LogCountLimit
+	} else {
+		return defaultLogCountLimit
+	}
+}
+
+func (config *LogzioConfig) defaultInMemoryCapacity() uint64 {
+	if config.InMemoryCapacity != 0 {
+		return config.InMemoryCapacity
+	} else {
+		return defaultInMemoryCapacity
+	}
 }
 
 func (config *LogzioConfig) customQueueDir() string {
