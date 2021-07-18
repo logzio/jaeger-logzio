@@ -92,9 +92,7 @@ func TestWriteSpanInMemory(tester *testing.T) {
 	writer, _ := NewLogzioSpanWriter(LogzioConfig{AccountToken: testAccountToken,
 		CustomListenerURL: server.URL,
 		Compress:          false,
-		InMemoryQueue:     true,
-		InMemoryCapacity:  20 * 1024 * 1024,
-		LogCountLimit:     500000}, logger)
+		InMemoryQueue:     true}, logger)
 	assert.NoError(tester, writer.WriteSpan(context.Background(), span))
 
 	time.Sleep(time.Second * 6)
@@ -186,8 +184,6 @@ func TestDropEmptyTagsInMemory(tester *testing.T) {
 	writer, _ := NewLogzioSpanWriter(LogzioConfig{AccountToken: testAccountToken,
 		CustomListenerURL: server.URL,
 		Compress:          false,
-		InMemoryCapacity:  20 * 1024 * 1024,
-		LogCountLimit:     500000,
 		InMemoryQueue:     true}, logger)
 	assert.NoError(tester, writer.WriteSpan(context.Background(), span))
 
