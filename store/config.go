@@ -25,9 +25,11 @@ const (
 	CompressParam         = "COMPRESS"
 	InMemoryCapacityParam = "IN_MEMORY_CAPACITY"
 	LogCountLimitParam    = "LOG_COUNT_LIMIT"
+	DrainIntervalParam    = "DRAIN_INTERVAL"
 	// default values for in memory queue config
 	defaultInMemoryCapacity = uint64(20 * 1024 * 1024)
 	defaultLogCountLimit    = 500000
+	defaultDrainInterval    = 3
 )
 
 // LogzioConfig struct for logzio span store
@@ -42,6 +44,7 @@ type LogzioConfig struct {
 	Compress          bool   `yaml:"Compress"`
 	InMemoryCapacity  uint64 `yaml:"InMemoryCapacity"`
 	LogCountLimit     int    `yaml:"LogCountLimit"`
+	DrainInterval     int    `yaml:"DrainInterval"`
 }
 
 // validate logzio config, return error if invalid
@@ -78,7 +81,8 @@ func ParseConfig(filePath string, logger hclog.Logger) (*LogzioConfig, error) {
 		logzioConfig.LogCountLimit = defaultLogCountLimit
 		logzioConfig.Compress = true
 		logzioConfig.InMemoryCapacity = defaultInMemoryCapacity
-		logzioConfig.InMemoryQueue = true
+		logzioConfig.InMemoryQueue = false
+		logzioConfig.DrainInterval = defaultDrainInterval
 	} else {
 		v := viper.New()
 		v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
@@ -86,10 +90,11 @@ func ParseConfig(filePath string, logger hclog.Logger) (*LogzioConfig, error) {
 		v.SetDefault(customAPIParam, "")
 		v.SetDefault(customListenerParam, "")
 		v.SetDefault(customQueueDirParam, "")
-		v.SetDefault(inMemoryQueueParam, true)
+		v.SetDefault(inMemoryQueueParam, false)
 		v.SetDefault(CompressParam, true)
 		v.SetDefault(InMemoryCapacityParam, defaultInMemoryCapacity)
 		v.SetDefault(LogCountLimitParam, defaultLogCountLimit)
+		v.SetDefault(DrainIntervalParam, defaultDrainInterval)
 		v.AutomaticEnv()
 
 		logzioConfig = &LogzioConfig{
@@ -103,6 +108,7 @@ func ParseConfig(filePath string, logger hclog.Logger) (*LogzioConfig, error) {
 			Compress:          v.GetBool(CompressParam),
 			InMemoryCapacity:  v.GetUint64(InMemoryCapacityParam),
 			LogCountLimit:     v.GetInt(LogCountLimitParam),
+			DrainInterval:     v.GetInt(DrainIntervalParam),
 		}
 	}
 
@@ -134,6 +140,15 @@ func (config *LogzioConfig) regionCode() string {
 		regionCode = fmt.Sprintf("-%s", config.Region)
 	}
 	return regionCode
+}
+
+func (config *LogzioConfig) drainIntervalToDuration() time.Duration {
+	if config.DrainInterval != 0 {
+		return time.Second * time.Duration(config.DrainInterval)
+	} else {
+		return time.Second * defaultDrainInterval
+	}
+
 }
 
 func (config *LogzioConfig) defaultLogCountLimit() int {
