@@ -78,7 +78,7 @@ func ParseConfig(filePath string, logger hclog.Logger) (*LogzioConfig, error) {
 		logzioConfig.LogCountLimit = defaultLogCountLimit
 		logzioConfig.Compress = true
 		logzioConfig.InMemoryCapacity = defaultInMemoryCapacity
-		logzioConfig.InMemoryQueue = false
+		logzioConfig.InMemoryQueue = true
 	} else {
 		v := viper.New()
 		v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
@@ -86,7 +86,7 @@ func ParseConfig(filePath string, logger hclog.Logger) (*LogzioConfig, error) {
 		v.SetDefault(customAPIParam, "")
 		v.SetDefault(customListenerParam, "")
 		v.SetDefault(customQueueDirParam, "")
-		v.SetDefault(inMemoryQueueParam, false)
+		v.SetDefault(inMemoryQueueParam, true)
 		v.SetDefault(CompressParam, true)
 		v.SetDefault(InMemoryCapacityParam, defaultInMemoryCapacity)
 		v.SetDefault(LogCountLimitParam, defaultLogCountLimit)
