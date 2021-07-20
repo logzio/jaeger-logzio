@@ -51,7 +51,7 @@ func TestDefaultValues(tester *testing.T) {
 	})
 	logzioConfig, _ := ParseConfig("../config.yaml", logger)
 	assert.Equal(tester, logzioConfig.LogCountLimit, 500000)
-	assert.Equal(tester, logzioConfig.InMemoryQueue, true)
+	assert.Equal(tester, logzioConfig.InMemoryQueue, false)
 	assert.Equal(tester, logzioConfig.InMemoryCapacity, uint64(20*1024*1024))
 	assert.Equal(tester, logzioConfig.Compress, true)
 
