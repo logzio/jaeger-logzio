@@ -49,7 +49,8 @@ func TestDefaultValues(tester *testing.T) {
 		Name:       "fake-logger",
 		JSONFormat: true,
 	})
-	logzioConfig, _ := ParseConfig("../resources/config.yaml", logger)
+	logzioConfig, _ := ParseConfig("./fixtures/testConfig.yaml", logger)
+	assert.Equal(tester, logzioConfig.CustomListenerURL, "")
 	assert.Equal(tester, logzioConfig.LogCountLimit, 500000)
 	assert.Equal(tester, logzioConfig.InMemoryQueue, false)
 	assert.Equal(tester, logzioConfig.InMemoryCapacity, uint64(20*1024*1024))

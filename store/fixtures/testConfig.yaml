@@ -1,10 +1,3 @@
 region: "testRegion"
 apiToken: "testApiToken"
 accountToken: "testAccountToken"
-customListenerUrl: "http://example.com"
-customQueueDir: "/tmp"
-inMemoryQueue: true
-compress: false
-inMemoryCapacity: 500
-logCountLimit: 500
-drainInterval: 5
