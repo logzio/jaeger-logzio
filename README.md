@@ -271,6 +271,15 @@ docker run --rm -it \
 Then navigate to http://localhost:8080 .
 
 ### Changelog
+
+   - v1.0.3
+      - Support for in memory queue
+      - Added gzip compression
+
+   - v1.0.2
+      - Changed the default queue directory from ~/tmp -> $HOME/tmp
+      - Changed custom queue directory validation to be windows compatible
+   
  - v1.0.1
     - Support for custom queue directory
 
