@@ -6,6 +6,7 @@ import (
 	"github.com/spf13/viper"
 	"io/ioutil"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -41,10 +42,10 @@ type LogzioConfig struct {
 	CustomAPIURL      string `yaml:"customAPIUrl"`
 	CustomQueueDir    string `yaml:"customQueueDir"`
 	InMemoryQueue     bool   `yaml:"inMemoryQueue"`
-	Compress          bool   `yaml:"Compress"`
-	InMemoryCapacity  uint64 `yaml:"InMemoryCapacity"`
-	LogCountLimit     int    `yaml:"LogCountLimit"`
-	DrainInterval     int    `yaml:"DrainInterval"`
+	Compress          bool   `yaml:"compress"`
+	InMemoryCapacity  uint64 `yaml:"inMemoryCapacity"`
+	LogCountLimit     int    `yaml:"logCountLimit"`
+	DrainInterval     int    `yaml:"drainInterval"`
 }
 
 // validate logzio config, return error if invalid
@@ -72,19 +73,26 @@ func ParseConfig(filePath string, logger hclog.Logger) (*LogzioConfig, error) {
 	var logzioConfig *LogzioConfig
 	if filePath != "" {
 		logzioConfig = &LogzioConfig{}
-		yamlFile, err := ioutil.ReadFile(filePath)
-		if err != nil {
-			return nil, err
-		}
-		err = yaml.Unmarshal(yamlFile, &logzioConfig)
 		// Set default values
 		logzioConfig.LogCountLimit = defaultLogCountLimit
 		logzioConfig.Compress = true
 		logzioConfig.InMemoryCapacity = defaultInMemoryCapacity
 		logzioConfig.InMemoryQueue = false
 		logzioConfig.DrainInterval = defaultDrainInterval
+		yamlFile, err := ioutil.ReadFile(filePath)
+		if err != nil {
+			return nil, err
+		}
+		err = yaml.Unmarshal(yamlFile, &logzioConfig)
+		if err != nil {
+			return nil, err
+		}
 	} else {
 		v := viper.New()
+		err := convertEnvironmentVariables()
+		if err != nil {
+			return nil, err
+		}
 		v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 		v.SetDefault(regionParam, "")
 		v.SetDefault(customAPIParam, "")
@@ -96,7 +104,6 @@ func ParseConfig(filePath string, logger hclog.Logger) (*LogzioConfig, error) {
 		v.SetDefault(LogCountLimitParam, defaultLogCountLimit)
 		v.SetDefault(DrainIntervalParam, defaultDrainInterval)
 		v.AutomaticEnv()
-
 		logzioConfig = &LogzioConfig{
 			Region:            v.GetString(regionParam),
 			AccountToken:      v.GetString(accountTokenParam),
@@ -115,7 +122,42 @@ func ParseConfig(filePath string, logger hclog.Logger) (*LogzioConfig, error) {
 	if err := logzioConfig.validate(logger); err != nil {
 		return nil, err
 	}
+
 	return logzioConfig, nil
+}
+
+func convertEnvironmentVariables() error {
+	if param, err := strconv.Atoi(os.Getenv(InMemoryCapacityParam)); err == nil {
+		viper.Set(InMemoryCapacityParam, uint64(param))
+	} else {
+		return err
+	}
+	if param, err := strconv.Atoi(os.Getenv(LogCountLimitParam)); err == nil {
+		viper.Set(LogCountLimitParam, param)
+	} else {
+		return err
+	}
+	if param, err := strconv.Atoi(os.Getenv(DrainIntervalParam)); err == nil {
+		viper.Set(DrainIntervalParam, param)
+	} else {
+		return err
+	}
+	if param, err := strconv.Atoi(os.Getenv(DrainIntervalParam)); err == nil {
+		viper.Set(DrainIntervalParam, param)
+	} else {
+		return err
+	}
+	if param, err := strconv.ParseBool(os.Getenv(inMemoryQueueParam)); err == nil {
+		viper.Set(inMemoryQueueParam, param)
+	} else {
+		return err
+	}
+	if param, err := strconv.ParseBool(os.Getenv(CompressParam)); err == nil {
+		viper.Set(CompressParam, param)
+	} else {
+		return err
+	}
+	return nil
 }
 
 // ListenerURL returns the constructed listener URL to write spans to

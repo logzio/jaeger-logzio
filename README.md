@@ -219,7 +219,19 @@ All bulks are compressed with gzip by default, to disable compressing initialize
 
 ## Run go binary with bash
 
-Clone this repo and change config.yaml to fit your Logz.io account parameters.
+Clone this repo and change `config.yaml` to fit your Logz.io account parameters.
+Example:
+```yaml
+region: "us"
+apiToken: "api-token"
+accountToken: "sapmle-token"
+drainInterval: 5
+customListenerUrl: "http://custom.com"
+compress: true
+inMemoryQueue: true
+inMemoryCapacity: 20 * 1024 * 1024
+logCountLimit: 10000
+```
 Then, build Logz.io binary:
 
 ```

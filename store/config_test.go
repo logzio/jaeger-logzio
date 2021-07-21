@@ -49,7 +49,7 @@ func TestDefaultValues(tester *testing.T) {
 		Name:       "fake-logger",
 		JSONFormat: true,
 	})
-	logzioConfig, _ := ParseConfig("../config.yaml", logger)
+	logzioConfig, _ := ParseConfig("../resources/config.yaml", logger)
 	assert.Equal(tester, logzioConfig.LogCountLimit, 500000)
 	assert.Equal(tester, logzioConfig.InMemoryQueue, false)
 	assert.Equal(tester, logzioConfig.InMemoryCapacity, uint64(20*1024*1024))
@@ -105,8 +105,36 @@ func TestCustomQueueDir(tester *testing.T) {
 func TestParseConfig(tester *testing.T) {
 	config, err := ParseConfig("fixtures/testConfig.yaml", logger)
 	assert.NoError(tester, err)
-
 	assert.Equal(tester, config.Region, testRegion)
 	assert.Equal(tester, config.AccountToken, testAccountToken)
 	assert.Equal(tester, config.APIToken, testAPIToken)
+	assert.Equal(tester, config.CustomListenerURL, "http://example.com")
+	assert.Equal(tester, config.InMemoryQueue, true)
+	assert.Equal(tester, config.Compress, false)
+	assert.Equal(tester, config.InMemoryCapacity, uint64(500))
+	assert.Equal(tester, config.LogCountLimit, 500)
+	assert.Equal(tester, config.DrainInterval, 5)
+	config, err = ParseConfig("fixtures/invalid.yaml", logger)
+	assert.Equal(tester, config.LogCountLimit, 500000)
+	assert.Equal(tester, config.InMemoryQueue, false)
+	assert.Equal(tester, config.InMemoryCapacity, uint64(20*1024*1024))
+	assert.Equal(tester, config.Compress, true)
+}
+
+func TestEnvironmentVars(tester *testing.T) {
+	os.Setenv(customQueueDirParam, "/tmp")
+	os.Setenv(accountTokenParam, "fake")
+	os.Setenv(inMemoryQueueParam, "true")
+	os.Setenv(CompressParam, "false")
+	os.Setenv(InMemoryCapacityParam, "500")
+	os.Setenv(LogCountLimitParam, "500")
+	os.Setenv(DrainIntervalParam, "5")
+
+	config, err := ParseConfig("", logger)
+	assert.NoError(tester, err)
+	assert.Equal(tester, config.InMemoryQueue, true)
+	assert.Equal(tester, config.Compress, false)
+	assert.Equal(tester, config.InMemoryCapacity, uint64(500))
+	assert.Equal(tester, config.LogCountLimit, 500)
+	assert.Equal(tester, config.DrainInterval, 5)
 }
