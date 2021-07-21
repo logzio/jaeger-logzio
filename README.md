@@ -198,20 +198,24 @@ you can override region settings by using these environment variables.
 
 By default, the queue is saved on disk You can also specify a custom directory to store the queue in
 
-| Parameter | Description |
-|---|---|
-| CUSTOM_QUEUE_DIR| Path to a directory you want to store the queue in, the default value is `$HOME/tmp`|
+| Parameter | Description | Default value |
+|---|---|---|
+| CUSTOM_QUEUE_DIR| Path to a directory you want to store the queue in | none |
+| DRAIN_INTERVAL| Queue drain interval in seconds | `3` |
+
 
 You can configure Jaeger-Logz.io the save the queue in memory and set log count limit and queue capacity:
 
 | Parameter | Description | Default value |
 |---|---|---|
-| IN_MEMORY_QUEUE| If the parameter is set to `true`, the queue wil be saved in memory| `false` |
+| IN_MEMORY_QUEUE| If the parameter is set to `true`, the queue wil be saved in memory, and override any disk queue configuration| `false` |
 | IN_MEMORY_CAPACITY| In memory queue capacity in bytes | `20 * 1024 * 1024` 20mb |
-| LOG_COUNT_LIMIT| Max number of items allowed in the queue| `500000` |
+| LOG_COUNT_LIMIT| Max number of items allowed in the queue, **note** this parameter is not relevant for disk queue| `500000` |
+| DRAIN_INTERVAL| Queue drain interval in seconds | `3` |
+
 
 ## Data compression
-All bulks are compressed with gzip by default to disable compressing initialize `COMPRESS` env variable set to `false`
+All bulks are compressed with gzip by default, to disable compressing initialize `COMPRESS` env variable set to `false`
 
 ## Run go binary with bash
 
