@@ -127,35 +127,41 @@ func ParseConfig(filePath string, logger hclog.Logger) (*LogzioConfig, error) {
 }
 
 func convertEnvironmentVariables() error {
-	if param, err := strconv.Atoi(os.Getenv(InMemoryCapacityParam)); err == nil {
-		viper.Set(InMemoryCapacityParam, uint64(param))
-	} else {
-		return err
+	if os.Getenv(InMemoryCapacityParam) != "" {
+		if param, err := strconv.Atoi(os.Getenv(InMemoryCapacityParam)); err == nil {
+			viper.Set(InMemoryCapacityParam, uint64(param))
+		} else {
+			return err
+		}
 	}
-	if param, err := strconv.Atoi(os.Getenv(LogCountLimitParam)); err == nil {
-		viper.Set(LogCountLimitParam, param)
-	} else {
-		return err
+	if os.Getenv(LogCountLimitParam) != "" {
+		if param, err := strconv.Atoi(os.Getenv(LogCountLimitParam)); err == nil {
+			viper.Set(LogCountLimitParam, param)
+		} else {
+			return err
+		}
+
 	}
-	if param, err := strconv.Atoi(os.Getenv(DrainIntervalParam)); err == nil {
-		viper.Set(DrainIntervalParam, param)
-	} else {
-		return err
+	if os.Getenv(DrainIntervalParam) != "" {
+		if param, err := strconv.Atoi(os.Getenv(DrainIntervalParam)); err == nil {
+			viper.Set(DrainIntervalParam, param)
+		} else {
+			return err
+		}
 	}
-	if param, err := strconv.Atoi(os.Getenv(DrainIntervalParam)); err == nil {
-		viper.Set(DrainIntervalParam, param)
-	} else {
-		return err
+	if os.Getenv(inMemoryQueueParam) != "" {
+		if param, err := strconv.ParseBool(os.Getenv(inMemoryQueueParam)); err == nil {
+			viper.Set(inMemoryQueueParam, param)
+		} else {
+			return err
+		}
 	}
-	if param, err := strconv.ParseBool(os.Getenv(inMemoryQueueParam)); err == nil {
-		viper.Set(inMemoryQueueParam, param)
-	} else {
-		return err
-	}
-	if param, err := strconv.ParseBool(os.Getenv(CompressParam)); err == nil {
-		viper.Set(CompressParam, param)
-	} else {
-		return err
+	if os.Getenv(CompressParam) != "" {
+		if param, err := strconv.ParseBool(os.Getenv(CompressParam)); err == nil {
+			viper.Set(CompressParam, param)
+		} else {
+			return err
+		}
 	}
 	return nil
 }

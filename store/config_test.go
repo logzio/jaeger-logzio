@@ -138,4 +138,20 @@ func TestEnvironmentVars(tester *testing.T) {
 	assert.Equal(tester, config.InMemoryCapacity, uint64(500))
 	assert.Equal(tester, config.LogCountLimit, 500)
 	assert.Equal(tester, config.DrainInterval, 5)
+
+	os.Setenv(customQueueDirParam, "/tmp")
+	os.Setenv(accountTokenParam, "fake")
+	os.Setenv(inMemoryQueueParam, "")
+	os.Setenv(CompressParam, "")
+	os.Setenv(InMemoryCapacityParam, "")
+	os.Setenv(LogCountLimitParam, "")
+	os.Setenv(DrainIntervalParam, "")
+	config, err = ParseConfig("", logger)
+	assert.NoError(tester, err)
+	assert.Equal(tester, config.InMemoryQueue, false)
+	assert.Equal(tester, config.Compress, true)
+	assert.Equal(tester, config.InMemoryCapacity, uint64(20*1024*1024))
+	assert.Equal(tester, config.LogCountLimit, 500000)
+	assert.Equal(tester, config.DrainInterval, 3)
+
 }
