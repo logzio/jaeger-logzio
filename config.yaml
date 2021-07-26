@@ -1,3 +1,12 @@
 region: "us"
 apiToken: "api-token"
 accountToken: "sapmle-token"
+customAPIParam:
+drainInterval: 5
+customListenerUrl: "http://custom.com"
+customQueueDir: "/tmp"
+compress: true
+# Uncomment to use in memory queue
+#inMemoryQueue: true
+#inMemoryCapacity: 20 * 1024 * 1024
+#logCountLimit: 10000

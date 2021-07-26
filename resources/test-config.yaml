@@ -1,6 +1,6 @@
-region: "testRegion"
-apiToken: "testApiToken"
-accountToken: "testAccountToken"
+region: "us"
+apiToken: "api-token"
+accountToken: "sapmle-token"
 customListenerUrl: "http://example.com"
 customQueueDir: "/tmp"
 inMemoryQueue: true

@@ -1,0 +1,10 @@
+region: "testRegion"
+apiToken: "testApiToken"
+accountToken: "testAccountToken"
+customLisfadstenerUrl: "http://example.com"
+customfadsfQueueDir: "/tmp"
+inMemfadsforyQueue: true
+fdas: false
+inMemfdasoYCapacity: 500
+logCoutypontLimit: 500
+drainfadIGterval: 5

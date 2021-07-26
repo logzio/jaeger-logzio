@@ -194,17 +194,44 @@ you can override region settings by using these environment variables.
 | CUSTOM_LISTENER_URL	| Set a custom URL to ship logs to (e.g., `http://localhost:9200`). This overrides the `REGION` environment variable. |
 | CUSTOM_API | Set a custom API URL (e.g., `http://localhost:9200/_msearch`). This overrides the `REGION` environment variable. |
 
-## Customizing local storage
+## Customizing storage
 
-You can also specify a custom directory to store the queue in
+By default, the queue is saved on disk You can also specify a custom directory to store the queue in
 
-| Parameter | Description |
-|---|---|
-| CUSTOM_QUEUE_DIR| Path to a directory you want to store the queue in, the default value is `$HOME/tmp`|
+| Parameter | Description | Default value |
+|---|---|---|
+| CUSTOM_QUEUE_DIR| Path to a directory you want to store the queue in | none |
+| DRAIN_INTERVAL| Queue drain interval in seconds | `3` |
+
+
+You can configure Jaeger-Logz.io the save the queue in memory and set log count limit and queue capacity:
+
+| Parameter | Description | Default value |
+|---|---|---|
+| IN_MEMORY_QUEUE| If the parameter is set to `true`, the queue wil be saved in memory, and override any disk queue configuration| `false` |
+| IN_MEMORY_CAPACITY| In memory queue capacity in bytes | `20 * 1024 * 1024` 20mb |
+| LOG_COUNT_LIMIT| Max number of items allowed in the queue, **note** this parameter is not relevant for disk queue| `500000` |
+| DRAIN_INTERVAL| Queue drain interval in seconds | `3` |
+
+
+## Data compression
+All bulks are compressed with gzip by default, to disable compressing initialize `COMPRESS` env variable set to `false`
 
 ## Run go binary with bash
 
-Clone this repo and change config.yaml to fit your Logz.io account parameters.
+Clone this repo and change `config.yaml` to fit your Logz.io account parameters.
+Example:
+```yaml
+region: "us"
+apiToken: "api-token"
+accountToken: "sapmle-token"
+drainInterval: 5
+customListenerUrl: "http://custom.com"
+compress: true
+inMemoryQueue: true
+inMemoryCapacity: 20 * 1024 * 1024
+logCountLimit: 10000
+```
 Then, build Logz.io binary:
 
 ```
@@ -244,6 +271,15 @@ docker run --rm -it \
 Then navigate to http://localhost:8080 .
 
 ### Changelog
+
+   - v1.0.3
+      - Support for in memory queue
+      - Added gzip compression
+
+   - v1.0.2
+      - Changed the default queue directory from ~/tmp -> $HOME/tmp
+      - Changed custom queue directory validation to be windows compatible
+   
  - v1.0.1
     - Support for custom queue directory
 
