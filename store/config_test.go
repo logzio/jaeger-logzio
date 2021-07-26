@@ -35,10 +35,7 @@ func TestValidate(tester *testing.T) {
 	config.APIToken = ""
 	assert.NoError(tester, config.validate(logger), "validation failed, one of api token or account token can be empty")
 
-	config.CustomQueueDir = fmt.Sprintf("%s", os.TempDir())
-	assert.NoError(tester, config.validate(logger), "validation failed, the directory is not writeable")
-
-	config.CustomQueueDir = fmt.Sprintf("%s/notexist", os.Getenv("HOME"))
+	config.CustomQueueDir = fmt.Sprintf("./notexist#@")
 	assert.Error(tester, config.validate(logger), "validation failed, the directory does not exist")
 
 }
@@ -153,5 +150,13 @@ func TestEnvironmentVars(tester *testing.T) {
 	assert.Equal(tester, config.InMemoryCapacity, uint64(20*1024*1024))
 	assert.Equal(tester, config.LogCountLimit, 500000)
 	assert.Equal(tester, config.DrainInterval, 3)
+
+	os.Unsetenv(customQueueDirParam)
+	os.Unsetenv(accountTokenParam)
+	os.Unsetenv(inMemoryQueueParam)
+	os.Unsetenv(CompressParam)
+	os.Unsetenv(InMemoryCapacityParam)
+	os.Unsetenv(LogCountLimitParam)
+	os.Unsetenv(DrainIntervalParam)
 
 }
