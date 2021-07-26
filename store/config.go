@@ -65,6 +65,7 @@ func (config *LogzioConfig) validate(logger hclog.Logger) error {
 			return errors.New(errMessage)
 		}
 	}
+	logger.Log(hclog.Info, config.String())
 	return nil
 }
 
