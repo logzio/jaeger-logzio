@@ -271,6 +271,8 @@ docker run --rm -it \
 Then navigate to http://localhost:8080 .
 
 ### Changelog
+   - v1.0.4
+      - Logzio-go -> 1.0.3
 
    - v1.0.3
       - Support for in memory queue
