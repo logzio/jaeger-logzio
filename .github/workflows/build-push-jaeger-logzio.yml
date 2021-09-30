@@ -19,18 +19,18 @@ jobs:
 
       - name: go build
         uses: actions/setup-go@v2
-        run: env GOOS=linux GOARCH=amd64 go build
+      - run: env GOOS=linux GOARCH=amd64 go build
 
       #logzio/jaeger-logzio
       - name: Push logzio/jaeger-logzio to Docker Hub with tag
-        id: docker_build
+        id: docker_build_logzio/jaeger-logzio
         uses: docker/build-push-action@v2
         with:
           push: true
           tags: logzio/jaeger-logzio:${{ github.event.release.tag_name }}
 
       - name: Push logzio/jaeger-logzio to Docker Hub latest
-        id: docker_build
+        id: docker_build_logzio/jaeger-logzio_latest
         uses: docker/build-push-action@v2
         with:
           push: true
@@ -38,7 +38,7 @@ jobs:
 
       #logzio/jaeger-logzio-collector
       - name: Push logzio/jaeger-logzio-collector to Docker Hub with tag
-        id: docker_build
+        id: docker_build_jaeger-logzio-collector
         uses: docker/build-push-action@v2
         with:
           push: true
@@ -46,7 +46,7 @@ jobs:
           tags: logzio/jaeger-logzio-collector:${{ github.event.release.tag_name }}
 
       - name: Push logzio/jaeger-logzio-collector to Docker Hub latest
-        id: docker_build
+        id: docker_build_jaeger-logzio-collector_latest
         uses: docker/build-push-action@v2
         with:
           push: true
@@ -58,7 +58,7 @@ jobs:
 
       #logzio/jaeger-logzio-query
       - name: Push logzio/jaeger-logzio-query to Docker Hub with tag
-        id: docker_build
+        id: docker_build_logzio/jaeger-logzio-query
         uses: docker/build-push-action@v2
         with:
           push: true
@@ -66,7 +66,7 @@ jobs:
           tags: logzio/jaeger-logzio-query:${{ github.event.release.tag_name }}
 
       - name: Push logzio/jaeger-logzio-query to Docker Hub latest
-        id: docker_build
+        id: docker_build_logzio/jaeger-logzio-query_latest
         uses: docker/build-push-action@v2
         with:
           push: true
