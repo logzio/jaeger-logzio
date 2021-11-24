@@ -3,6 +3,9 @@
 Jaeger-Logz.io is a storage option for Jaeger.
 It allows Jaeger to store distributed traces on your Logz.io account.
 
+## ⚠️ Warning
+We do not reccomend to use this library as standalone integration for traces, if you want to send traces to logz.io we reccomand using the [opentelemetry collector contrib](https://github.com/open-telemetry/opentelemetry-collector-contrib) project with [logzio exprter](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/exporter/logzioexporter)
+
 **Note**:
 This integration requires Logz.io API access.
 The Logz.io API is available for Pro and Enterprise accounts.
