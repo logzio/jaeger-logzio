@@ -1,5 +1,5 @@
 FROM jaegertracing/jaeger-query:1.18
-FROM alpine
+FROM alpine:3.15.4
 
 COPY --from=0 /go/bin/query-linux /go/bin/query-linux
 RUN apk add --update --no-cache ca-certificates
