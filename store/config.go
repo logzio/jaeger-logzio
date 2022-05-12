@@ -65,6 +65,19 @@ func (config *LogzioConfig) validate(logger hclog.Logger) error {
 			return errors.New(errMessage)
 		}
 	}
+	config.Region = strings.ToLower(config.Region)
+	validRegionCodes := [8]string{"", "us", "eu", "nl", "ca", "wa", "uk", "au"}
+	regionIsValid := false
+	for _, region := range validRegionCodes {
+		if config.Region == region {
+			regionIsValid = true
+		}
+	}
+	if !regionIsValid {
+		warnMessage := fmt.Sprintf("%s region is not supported yet", config.Region)
+		config.Region = ""
+		logger.Warn(warnMessage)
+	}
 	logger.Log(hclog.Info, config.String())
 	return nil
 }
@@ -185,8 +198,8 @@ func (config *LogzioConfig) APIURL() string {
 
 func (config *LogzioConfig) regionCode() string {
 	regionCode := ""
-	if config.Region != "" && config.Region != usRegionCode {
-		regionCode = fmt.Sprintf("-%s", config.Region)
+	if config.Region != "" && strings.ToLower(config.Region) != usRegionCode {
+		regionCode = fmt.Sprintf("-%s", strings.ToLower(config.Region))
 	}
 	return regionCode
 }
