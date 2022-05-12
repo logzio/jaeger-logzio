@@ -277,7 +277,7 @@ Then navigate to http://localhost:8080 .
 
 - v1.0.5
   - Update logzio-go (v1.0.3 -> v1.0.5)
-  - Fix region code bug + test for it
+  - Fix region code bug
 
 - v1.0.4
   - Logzio-go -> 1.0.3
