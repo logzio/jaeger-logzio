@@ -25,7 +25,6 @@ func TestValidate(tester *testing.T) {
 		APIToken:     "",
 		Region:       "",
 	}
-
 	assert.Error(tester, config.validate(logger), "validation failed, empty account token and api token should produce error")
 
 	config.APIToken = testAccountToken
@@ -38,6 +37,31 @@ func TestValidate(tester *testing.T) {
 	config.CustomQueueDir = fmt.Sprintf("./notexist#@")
 	assert.Error(tester, config.validate(logger), "validation failed, the directory does not exist")
 
+}
+
+func TestRegionCode(t *testing.T) {
+	type regionCodeTest struct {
+		config   LogzioConfig
+		expected string
+	}
+	var regionCodeTests = []regionCodeTest{
+		{LogzioConfig{Region: "us"}, ""},
+		{LogzioConfig{Region: "eu"}, "-eu"},
+		{LogzioConfig{Region: "au"}, "-au"},
+		{LogzioConfig{Region: "ca"}, "-ca"},
+		{LogzioConfig{Region: "nl"}, "-nl"},
+		{LogzioConfig{Region: "uk"}, "-uk"},
+		{LogzioConfig{Region: "wa"}, "-wa"},
+		{LogzioConfig{Region: ""}, ""},
+		{LogzioConfig{Region: "US"}, ""},
+		{LogzioConfig{Region: "EU"}, "-eu"},
+	}
+	for _, test := range regionCodeTests {
+		output := test.config.regionCode()
+		if output != test.expected {
+			t.Fatalf("Result for %s region is in correct.\nExpected: %s\nActual:%s", test.config.Region, test.expected, output)
+		}
+	}
 }
 
 func TestDefaultValues(tester *testing.T) {
@@ -103,7 +127,7 @@ func TestCustomQueueDir(tester *testing.T) {
 func TestParseConfig(tester *testing.T) {
 	config, err := ParseConfig("fixtures/testConfig.yaml", logger)
 	assert.NoError(tester, err)
-	assert.Equal(tester, config.Region, testRegion)
+	assert.Equal(tester, config.Region, "")
 	assert.Equal(tester, config.AccountToken, testAccountToken)
 	assert.Equal(tester, config.APIToken, testAPIToken)
 	assert.Equal(tester, config.CustomListenerURL, "http://example.com")
