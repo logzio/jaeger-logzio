@@ -274,7 +274,8 @@ docker run --rm -it \
 Then navigate to http://localhost:8080 .
 
 ### Changelog
-
+- v1.0.6
+  - Update logzio-go (v1.0.5 -> v1.0.6)
 - v1.0.5
   - Update logzio-go (v1.0.3 -> v1.0.5)
   - Fix region code bug
