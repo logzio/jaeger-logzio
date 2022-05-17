@@ -161,6 +161,17 @@
   version = "v1.14.0"
 
 [[projects]]
+  digest = "1:cb1efde886726611521d8ce5bbc7b10679434641381b471fd8199565d3ca39b6"
+  name = "github.com/logzio/jaeger-logzio"
+  packages = [
+    "store",
+    "store/objects",
+  ]
+  pruneopts = "UT"
+  revision = "ad2ae56dfc07f6fe7922cec279778fadc094ef99"
+  version = "v1.0.5"
+
+[[projects]]
   branch = "master"
   digest = "1:9881d2f5be064682e6ab90b9f4e66f875d6cf22d4a099c0665f8cac4f21a9921"
   name = "github.com/logzio/logzio-go"
@@ -504,8 +515,11 @@
     "github.com/jaegertracing/jaeger/pkg/cache",
     "github.com/jaegertracing/jaeger/plugin/storage/es/spanstore/dbmodel",
     "github.com/jaegertracing/jaeger/plugin/storage/grpc",
+    "github.com/jaegertracing/jaeger/plugin/storage/grpc/shared",
     "github.com/jaegertracing/jaeger/storage/dependencystore",
     "github.com/jaegertracing/jaeger/storage/spanstore",
+    "github.com/logzio/jaeger-logzio/store",
+    "github.com/logzio/jaeger-logzio/store/objects",
     "github.com/logzio/logzio-go",
     "github.com/olivere/elastic",
     "github.com/opentracing/opentracing-go",
